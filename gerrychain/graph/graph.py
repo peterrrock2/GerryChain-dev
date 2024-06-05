@@ -418,9 +418,61 @@ class Graph(networkx.Graph):
         self.warn_for_islands()
 
 
+def __surcharge_bfs(
+    graph,
+    root_edge,
+    region: str,
+    surcharge: float,
+    attenuation_factor: float = 0.0,
+    attenuation_radius: int = 0,
+):
+    # We only want to do this near the boundary of the
+    # region of interest
+    if attenuation_radius <= 0:
+        return
+
+    # Also need to track the distance from the boundary
+    queue = deque([(root_edge, 0)])
+    visited = set([root_edge])
+
+    while queue:
+        current_edge, dist = queue.popleft()
+
+        u, v = current_edge
+
+        neighbor_list = []
+
+        if dist > attenuation_radius:
+            break
+
+        for neighbor in graph.neighbors(u):
+            edge = (u, neighbor) if u < neighbor else (neighbor, u)
+            neighbor_list.append(edge)
+            if edge not in visited:
+                visited.add(edge)
+                queue.append((edge, dist + 1))
+
+        for neighbor in graph.neighbors(v):
+            edge = (v, neighbor) if v < neighbor else (neighbor, v)
+            neighbor_list.append(edge)
+            if edge not in visited:
+                visited.add(edge)
+                queue.append((edge, dist + 1))
+
+        graph.edges[current_edge]["surcharge"] = max(
+            graph.edges[current_edge].get("surcharge", 0.0),
+            surcharge * (attenuation_factor**dist),
+        )
+
+        # The -1 makes the priority of the initial edge consistent
+        # and gets rid of gaps in the priority values
+
+
 def add_surcharges(
     graph,
     region_surcharge: dict = None,
+    attenuation_factor: dict | float = 0.0,
+    attenuation_radius: dict | int = 0,
 ):
     if isinstance(graph, FrozenGraph):
         return
@@ -434,19 +486,46 @@ def add_surcharges(
 
         return graph
 
+    if isinstance(attenuation_factor, float):
+        attenuation_factor_dict = {key: attenuation_factor for key in region_surcharge}
+    elif isinstance(attenuation_factor, dict):
+        attenuation_factor_dict = attenuation_factor
+    else:
+        raise TypeError(
+            f"Unsupported attenuation factor with type {type(attenuation_factor)}"
+        )
+
+    if isinstance(attenuation_radius, int):
+        attenuation_radius_dict = {key: attenuation_radius for key in region_surcharge}
+    elif isinstance(attenuation_radius, dict):
+        attenuation_radius_dict = attenuation_radius
+    else:
+        raise TypeError(
+            f"Unsupported attenuation radius with type {type(attenuation_radius)}"
+        )
+
     for edge in graph.edges:
         graph.edges[edge]["priority"] = graph.edges[edge].get("priority", 0.0)
-        graph.edges[edge]["surcharge"] = graph.edges[edge].get("surcharge", 0.0)
 
         for key, value in region_surcharge.items():
-            if (
-                graph.nodes[edge[0]][key] != graph.nodes[edge[1]][key]
-                or graph.nodes[edge[0]][key] is None
-                or graph.nodes[edge[1]][key] is None
-            ):
-                graph.edges[edge]["surcharge"] += value
+            if graph.nodes[edge[0]][key] != graph.nodes[edge[1]][key]:
+                graph.edges[edge]["surcharge"] = max(
+                    graph.edges[edge].get("surcharge", 0.0), value
+                )
+
+                if graph.nodes[edge[0]][key] != graph.nodes[edge[1]][key]:
+                    __surcharge_bfs(
+                        graph,
+                        edge,
+                        key,
+                        value,
+                        attenuation_factor_dict[key],
+                        attenuation_radius_dict[key],
+                    )
 
             else:
+                graph.edges[edge]["surcharge"] = graph.edges[edge].get("surcharge", 0.0)
+
                 # Increase the priority for each edge that is in the same region
                 # this makes them less likely to be cut
                 if (
@@ -454,6 +533,17 @@ def add_surcharges(
                     and graph.nodes[edge[0]][key] is not None
                 ):
                     graph.edges[edge]["priority"] += 1
+
+    for edge in graph.edges:
+        none_weight = sum(
+            value
+            for key, value in region_surcharge.items()
+            if graph.nodes[edge[0]][key] is None and graph.nodes[edge[1]][key] is None
+        )
+
+        graph.edges[edge]["surcharge"] = max(
+            graph.edges[edge].get("surcharge", 0.0), none_weight
+        )
 
     return graph
 
