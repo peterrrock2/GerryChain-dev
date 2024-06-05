@@ -39,7 +39,6 @@ def recom(
     pop_target: Union[int, float],
     epsilon: float,
     node_repeats: int = 1,
-    region_surcharge: Optional[Dict] = None,
     method: Callable = bipartition_tree,
 ) -> Partition:
     """
@@ -95,10 +94,6 @@ def recom(
     bad_district_pairs = set()
     n_parts = len(partition)
     tot_pairs = n_parts * (n_parts - 1) / 2  # n choose 2
-
-    # Try to add the region aware in if the method accepts the surcharge dictionary
-    if "region_surcharge" in signature(method).parameters:
-        method = partial(method, region_surcharge=region_surcharge)
 
     while len(bad_district_pairs) < tot_pairs:
         try:

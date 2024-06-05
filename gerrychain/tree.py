@@ -57,9 +57,7 @@ def successors(h: nx.Graph, root: Any) -> Dict:
     return {a: b for a, b in nx.bfs_successors(h, root)}
 
 
-def random_spanning_tree(
-    graph: nx.Graph, region_surcharge: Optional[Dict] = None
-) -> nx.Graph:
+def random_spanning_tree(graph: nx.Graph) -> nx.Graph:
     """
     Builds a spanning tree chosen by Kruskal's method using random weights.
 
@@ -72,21 +70,11 @@ def random_spanning_tree(
     :returns: The maximal spanning tree represented as a Networkx Graph.
     :rtype: nx.Graph
     """
-    if region_surcharge is None:
-        region_surcharge = dict()
-
     for edge in graph.edges():
         weight = random.random()
-        for key, value in region_surcharge.items():
-            # We surcharge edges that cross regions and those that are not in any region
-            if (
-                graph.nodes[edge[0]][key] != graph.nodes[edge[1]][key]
-                or graph.nodes[edge[0]][key] is None
-                or graph.nodes[edge[1]][key] is None
-            ):
-                weight += value
-
-        graph.edges[edge]["random_weight"] = weight
+        graph.edges[edge]["random_weight"] = weight + graph.edges[edge].get(
+            "surcharge", 0
+        )
 
     spanning_tree = tree.minimum_spanning_tree(
         graph, algorithm="kruskal", weight="random_weight"
@@ -230,11 +218,12 @@ class PopulatedGraph:
 
 
 # Tuple that is used in the find_balanced_edge_cuts function
-Cut = namedtuple("Cut", "edge weight subset")
-Cut.__new__.__defaults__ = (None, None, None)
+Cut = namedtuple("Cut", "edge weight priority subset")
+Cut.__new__.__defaults__ = (None, None, None, None)
 Cut.__doc__ = "Represents a cut in a graph."
 Cut.edge.__doc__ = "The edge where the cut is made. Defaults to None."
 Cut.weight.__doc__ = "The weight assigned to the edge (if any). Defaults to None."
+Cut.priority.__doc__ = "The priority assigned to the edge (if any). Defaults to None."
 Cut.subset.__doc__ = (
     "The (frozen) subset of nodes on one side of the cut. Defaults to None."
 )
@@ -275,6 +264,7 @@ def find_balanced_edge_cuts_contraction(
                 Cut(
                     edge=e,
                     weight=h.graph.edges[e].get("random_weight", random.random()),
+                    priority=h.graph.edges[e].get("priority", 0),
                     subset=frozenset(h.subsets[leaf].copy()),
                 )
             )
@@ -392,6 +382,7 @@ def find_balanced_edge_cuts_memoization(
                     Cut(
                         edge=e,
                         weight=h.graph.edges[e].get("random_weight", wt),
+                        priority=h.graph.edges[e].get("priority", 0),
                         subset=frozenset(_part_nodes(node, succ)),
                     )
                 )
@@ -402,6 +393,7 @@ def find_balanced_edge_cuts_memoization(
                     Cut(
                         edge=e,
                         weight=h.graph.edges[e].get("random_weight", wt),
+                        priority=h.graph.edges[e].get("priority", 0),
                         subset=frozenset(set(h.graph.nodes) - _part_nodes(node, succ)),
                     )
                 )
@@ -418,6 +410,7 @@ def find_balanced_edge_cuts_memoization(
                 Cut(
                     edge=e,
                     weight=h.graph.edges[e].get("random_weight", wt),
+                    priority=h.graph.edges[e].get("priority", 0),
                     subset=frozenset(set(h.graph.nodes) - _part_nodes(node, succ)),
                 )
             )
@@ -480,18 +473,18 @@ def _max_weight_choice(cut_edge_list: List[Cut]) -> Cut:
     return max(cut_edge_list, key=lambda cut: cut.weight)
 
 
-def _power_set_sorted_by_size_then_sum(d):
-    power_set = [
-        s for i in range(1, len(d) + 1) for s in itertools.combinations(d.keys(), i)
-    ]
+# def _power_set_sorted_by_size_then_sum(d):
+#     power_set = [
+#         s for i in range(1, len(d) + 1) for s in itertools.combinations(d.keys(), i)
+#     ]
 
-    # Sort the subsets in descending order based on
-    # the sum of their corresponding values in the dictionary
-    sorted_power_set = sorted(
-        power_set, key=lambda s: (len(s), sum(d[i] for i in s)), reverse=True
-    )
+#     # Sort the subsets in descending order based on
+#     # the sum of their corresponding values in the dictionary
+#     sorted_power_set = sorted(
+#         power_set, key=lambda s: (len(s), sum(d[i] for i in s)), reverse=True
+#     )
 
-    return sorted_power_set
+#     return sorted_power_set
 
 
 # Note that the populated graph and the region surcharge are passed
@@ -499,7 +492,7 @@ def _power_set_sorted_by_size_then_sum(d):
 # are not modifying the object in the function, and the speed of
 # this randomized selection will not suffer for it.
 def _region_preferred_max_weight_choice(
-    populated_graph: PopulatedGraph, region_surcharge: Dict, cut_edge_list: List[Cut]
+    populated_graph: PopulatedGraph, cut_edge_list: List[Cut]
 ) -> Cut:
     """
     This function is used in the case of a region-aware chain. It
@@ -537,43 +530,42 @@ def _region_preferred_max_weight_choice(
         surcharge.
     :rtype: Cut
     """
-    if (
-        not isinstance(region_surcharge, dict)
-        or not isinstance(cut_edge_list[0], Cut)
-        or cut_edge_list[0].weight is None
-    ):
-        return random.choice(cut_edge_list)
+    # # Prepare data for efficient access
+    # edge_region_info = {
+    #     cut: {
+    #         key: (
+    #             populated_graph.graph.nodes[cut.edge[0]].get(key),
+    #             populated_graph.graph.nodes[cut.edge[1]].get(key),
+    #         )
+    #         for key in region_surcharge
+    #     }
+    #     for cut in cut_edge_list
+    # }
 
-    # Early return for simple cases
-    if len(region_surcharge) < 1 or len(region_surcharge) > 3:
-        return _max_weight_choice(cut_edge_list)
+    # # Generate power set sorted by surcharge, then filter cuts based
+    # # on region matching
+    # power_set = _power_set_sorted_by_size_then_sum(region_surcharge)
+    # for region_combination in power_set:
+    #     suitable_cuts = [
+    #         cut
+    #         for cut in cut_edge_list
+    #         if all(
+    #             edge_region_info[cut][key][0] != edge_region_info[cut][key][1]
+    #             for key in region_combination
+    #         )
+    #     ]
+    #     if suitable_cuts:
+    #         return _max_weight_choice(suitable_cuts)
 
-    # Prepare data for efficient access
-    edge_region_info = {
-        cut: {
-            key: (
-                populated_graph.graph.nodes[cut.edge[0]].get(key),
-                populated_graph.graph.nodes[cut.edge[1]].get(key),
-            )
-            for key in region_surcharge
-        }
-        for cut in cut_edge_list
-    }
+    sutiable_cuts = []
+    # The lower the priority, the higher the importance because sorting
+    greatest_priority = sorted(cut_edge_list, key=lambda cut: cut.priority)[0].priority
+    for cut in cut_edge_list:
+        if cut.priority == greatest_priority:
+            sutiable_cuts.append(cut)
 
-    # Generate power set sorted by surcharge, then filter cuts based
-    # on region matching
-    power_set = _power_set_sorted_by_size_then_sum(region_surcharge)
-    for region_combination in power_set:
-        suitable_cuts = [
-            cut
-            for cut in cut_edge_list
-            if all(
-                edge_region_info[cut][key][0] != edge_region_info[cut][key][1]
-                for key in region_combination
-            )
-        ]
-        if suitable_cuts:
-            return _max_weight_choice(suitable_cuts)
+    if sutiable_cuts:
+        return _max_weight_choice(sutiable_cuts)
 
     return _max_weight_choice(cut_edge_list)
 
@@ -586,7 +578,7 @@ def bipartition_tree(
     node_repeats: int = 1,
     spanning_tree: Optional[nx.Graph] = None,
     spanning_tree_fn: Callable = random_spanning_tree,
-    region_surcharge: Optional[Dict] = None,
+    # region_surcharge: Optional[Dict] = None,
     balance_edge_fn: Callable = find_balanced_edge_cuts_memoization,
     one_sided_cut: bool = False,
     choice: Callable = random.choice,
@@ -660,10 +652,6 @@ def bipartition_tree(
     :raises RuntimeError: If a possible cut cannot be found after the maximum number of attempts
         given by ``max_attempts``.
     """
-    # Try to add the region-aware in if the spanning_tree_fn accepts a surcharge dictionary
-    if "region_surcharge" in signature(spanning_tree_fn).parameters:
-        spanning_tree_fn = partial(spanning_tree_fn, region_surcharge=region_surcharge)
-
     if "one_sided_cut" in signature(balance_edge_fn).parameters:
         balance_edge_fn = partial(balance_edge_fn, one_sided_cut=one_sided_cut)
 
@@ -682,19 +670,16 @@ def bipartition_tree(
             restarts = 0
         h = PopulatedGraph(spanning_tree, populations, pop_target, epsilon)
 
-        is_region_cut = (
-            "region_surcharge" in signature(cut_choice).parameters
-            and "populated_graph" in signature(cut_choice).parameters
-        )
+        # is_region_cut = (
+        #     "region_surcharge" in signature(cut_choice).parameters
+        #     and "populated_graph" in signature(cut_choice).parameters
+        # )
 
         # This returns a list of Cut objects with attributes edge and subset
         possible_cuts = balance_edge_fn(h, choice=choice)
 
         if len(possible_cuts) != 0:
-            if is_region_cut:
-                return cut_choice(h, region_surcharge, possible_cuts).subset
-
-            return cut_choice(possible_cuts).subset
+            return cut_choice(h, possible_cuts).subset
 
         restarts += 1
         attempts += 1

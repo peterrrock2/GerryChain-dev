@@ -24,6 +24,7 @@ import pandas as pd
 from .adjacency import neighbors
 from .geo import GeometryError, invalid_geometries, reprojected
 from typing import List, Iterable, Optional, Set, Tuple, Union
+from collections import deque
 
 
 def json_serialize(input_object: Any) -> Optional[int]:
@@ -71,6 +72,7 @@ class Graph(networkx.Graph):
         :rtype: Graph
         """
         g = cls(graph)
+        add_surcharges(g)
         return g
 
     @classmethod
@@ -414,6 +416,46 @@ class Graph(networkx.Graph):
         :raises: UserWarning if the graph has any red flags (right now, only islands).
         """
         self.warn_for_islands()
+
+
+def add_surcharges(
+    graph,
+    region_surcharge: dict = None,
+):
+    if isinstance(graph, FrozenGraph):
+        return
+    if not isinstance(graph, Graph) or not isinstance(graph, networkx.Graph):
+        raise TypeError(f"Unsupported Graph object with type {type(graph)}")
+
+    if region_surcharge is None:
+        for edge in graph.edges:
+            graph.edges[edge]["surcharge"] = graph.edges[edge].get("surcharge", 0.0)
+            graph.edges[edge]["priority"] = graph.edges[edge].get("priority", 0)
+
+        return graph
+
+    for edge in graph.edges:
+        graph.edges[edge]["priority"] = graph.edges[edge].get("priority", 0.0)
+        graph.edges[edge]["surcharge"] = graph.edges[edge].get("surcharge", 0.0)
+
+        for key, value in region_surcharge.items():
+            if (
+                graph.nodes[edge[0]][key] != graph.nodes[edge[1]][key]
+                or graph.nodes[edge[0]][key] is None
+                or graph.nodes[edge[1]][key] is None
+            ):
+                graph.edges[edge]["surcharge"] += value
+
+            else:
+                # Increase the priority for each edge that is in the same region
+                # this makes them less likely to be cut
+                if (
+                    graph.nodes[edge[0]][key] == graph.nodes[edge[1]][key]
+                    and graph.nodes[edge[0]][key] is not None
+                ):
+                    graph.edges[edge]["priority"] += 1
+
+    return graph
 
 
 def add_boundary_perimeters(graph: Graph, geometries: pd.Series) -> None:

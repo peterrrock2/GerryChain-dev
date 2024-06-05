@@ -15,6 +15,7 @@ from gerrychain import (
     tree,
 )
 from gerrychain.tree import ReselectException, BipartitionWarning
+from gerrychain.graph import add_surcharges
 
 
 def run_chain_single(
@@ -35,6 +36,12 @@ def run_chain_single(
     import random
 
     graph = Graph.from_json("tests/graphs_for_test/8x8_with_muni.json")
+    surcharges = {category: surcharge}
+    graph = add_surcharges(
+        graph=graph,
+        region_surcharge=surcharges,
+    )
+
     population_col = "TOTPOP"
 
     updaters = {
@@ -45,7 +52,6 @@ def run_chain_single(
     initial_partition = Partition(graph, assignment="district", updaters=updaters)
 
     ideal_pop = sum(initial_partition["population"].values()) / len(initial_partition)
-    surcharges = {category: surcharge}
     num_steps = steps
     epsilon = 0.01
 
@@ -55,7 +61,6 @@ def run_chain_single(
         pop_col=population_col,
         pop_target=ideal_pop,
         epsilon=epsilon,
-        region_surcharge=surcharges,
         node_repeats=10,
         method=partial(
             tree.bipartition_tree,
@@ -79,7 +84,7 @@ def run_chain_single(
     return n_splits
 
 
-@pytest.mark.slow
+# @pytest.mark.slow
 def test_region_aware_muni():
     n_samples = 30
     region = "muni"
@@ -195,6 +200,11 @@ def run_chain_dual(
         "cut_edges": updaters.cut_edges,
         "splits": updaters.tally_region_splits(["muni", "county"]),
     }
+
+    graph = add_surcharges(
+        graph=graph,
+        region_surcharge=surcharges,
+    )
     initial_partition = Partition(graph, assignment="district", updaters=updaters)
 
     ideal_pop = sum(initial_partition["population"].values()) / len(initial_partition)
@@ -207,7 +217,6 @@ def run_chain_dual(
         pop_col=population_col,
         pop_target=ideal_pop,
         epsilon=epsilon,
-        region_surcharge=surcharges,
         node_repeats=10,
         method=partial(
             tree.bipartition_tree,

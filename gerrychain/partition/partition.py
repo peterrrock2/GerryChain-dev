@@ -1,7 +1,7 @@
 import json
 import networkx
 
-from gerrychain.graph.graph import FrozenGraph, Graph
+from gerrychain.graph.graph import FrozenGraph, Graph, add_surcharges
 from ..updaters import compute_edge_flows, flows_from_changes, cut_edges
 from .assignment import get_assignment
 from .subgraphs import SubgraphView
@@ -121,10 +121,18 @@ class Partition:
 
     def _first_time(self, graph, assignment, updaters, use_default_updaters):
         if isinstance(graph, Graph):
-            self.graph = FrozenGraph(graph)
+            first_edge = list(graph.edges(data=True))[0][-1]
+            if first_edge.get("surcharge", None) is None:
+                self.graph = FrozenGraph(add_surcharges(graph))
+            else:
+                self.graph = FrozenGraph(graph)
         elif isinstance(graph, networkx.Graph):
-            graph = Graph.from_networkx(graph)
-            self.graph = FrozenGraph(graph)
+            gerry_graph = Graph.from_networkx(graph)
+            first_edge = list(gerry_graph.edges(data=True))[0][-1]
+            if first_edge.get("surcharge", None) is None:
+                self.graph = FrozenGraph(add_surcharges(gerry_graph))
+            else:
+                self.graph = FrozenGraph(gerry_graph)
         elif isinstance(graph, FrozenGraph):
             self.graph = graph
         else:
