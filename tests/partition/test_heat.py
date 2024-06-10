@@ -265,6 +265,40 @@ def two_by_six_with_none_values():
     return graph
 
 
+
+def test_partition_heating_graph_correctly_single_edge_no_rad(seven_by_eight_grid_single_join):
+
+    graph = add_surcharges(
+        seven_by_eight_grid_single_join,
+        region_surcharge={"region": 0.9},
+        attenuation_factor=0.5,
+    )
+
+    my_partition = Partition(
+        graph,
+        assignment="district",
+    )
+
+    # fmt: off
+    weighted_edges = set(
+        [
+            (27, 28, frozendict({"surcharge": 0.9, "priority": 0})),
+        ]
+    )
+    # fmt: on
+
+    for edge in weighted_edges:
+        assert edge in my_partition.graph.edges(data=True)
+
+    for edge in my_partition.graph.edges(data=True):
+        tuple_edge = (edge[0], edge[1], frozendict(edge[2]))
+        if tuple_edge not in weighted_edges:
+            assert edge[2]["surcharge"] == 0.0
+            assert edge[2]["priority"] == 1
+
+
+
+
 def test_partition_heating_graph_correctly_single_edge(seven_by_eight_grid_single_join):
 
     graph = add_surcharges(
@@ -771,6 +805,51 @@ def test_partition_heating_none_values_correctly(two_by_six_with_none_values):
 
     for edge in weighted_edges:
         assert edge in my_partition.graph.edges(data=True)
+
+
+
+def test_partition_heating_none_values_correctly_no_rad(two_by_six_with_none_values):
+    reg = 1.0
+    sub = 0.9
+
+    graph = add_surcharges(
+        two_by_six_with_none_values,
+        region_surcharge={"region": reg},
+    )
+
+    my_partition = Partition(
+        graph,
+        assignment="district",
+    )
+
+    # fmt: off
+    weighted_edges = set(
+        [
+            (0,  6,  frozendict({'surcharge': 0.0, 'priority': 1})),
+            (1,  2,  frozendict({'surcharge': 0.0, 'priority': 1})),
+            (1,  7,  frozendict({'surcharge': 0.0, 'priority': 1})),
+            (2,  3,  frozendict({'surcharge': 1.0, 'priority': 0})),
+            (2,  8,  frozendict({'surcharge': 0.0, 'priority': 1})),
+            (3,  4,  frozendict({'surcharge': 1.0, 'priority': 0})),
+            (3,  9,  frozendict({'surcharge': 1.0, 'priority': 0})),
+            (4,  5,  frozendict({'surcharge': 1.0, 'priority': 0})),
+            (4,  10, frozendict({'surcharge': 1.0, 'priority': 0})),
+            (5,  11, frozendict({'surcharge': 1.0, 'priority': 0})),
+            (6,  7,  frozendict({'surcharge': 0.0, 'priority': 1})),
+            (7,  8,  frozendict({'surcharge': 0.0, 'priority': 1})),
+            (8,  9,  frozendict({'surcharge': 1.0, 'priority': 0})),
+            (9,  10, frozendict({'surcharge': 1.0, 'priority': 0})),
+            (10, 11, frozendict({'surcharge': 1.0, 'priority': 0})),
+        ]
+    )
+    # fmt: on
+
+    for edge in weighted_edges:
+        assert edge in my_partition.graph.edges(data=True)
+
+
+
+
 
 
 def test_partition_heating_one_coi_with_gap_between_different_labels(
