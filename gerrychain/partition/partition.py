@@ -1,5 +1,6 @@
 import json
 import networkx
+import rustworkx
 
 from gerrychain.graph.graph import FrozenGraph, Graph, add_surcharges
 from ..updaters import compute_edge_flows, flows_from_changes, cut_edges
@@ -101,7 +102,9 @@ class Partition:
         :returns: The partition created with a random assignment
         :rtype: Partition
         """
-        total_pop = sum(graph.nodes[n][pop_col] for n in graph)
+        total_pop = sum(
+            graph.get_node_data(idx)[pop_col] for idx in graph.node_indices()
+        )
         ideal_pop = total_pop / n_parts
 
         assignment = method(
@@ -121,14 +124,21 @@ class Partition:
 
     def _first_time(self, graph, assignment, updaters, use_default_updaters):
         if isinstance(graph, Graph):
-            first_edge = list(graph.edges(data=True))[0][-1]
+            first_edge = graph.weighted_edge_list()[0][2]
             if first_edge.get("surcharge", None) is None:
                 self.graph = FrozenGraph(add_surcharges(graph))
             else:
                 self.graph = FrozenGraph(graph)
-        elif isinstance(graph, networkx.Graph):
+        elif isinstance(graph, networkx.PyGraph):
             gerry_graph = Graph.from_networkx(graph)
-            first_edge = list(gerry_graph.edges(data=True))[0][-1]
+            first_edge = graph.weighted_edge_list()[0][2]
+            if first_edge.get("surcharge", None) is None:
+                self.graph = FrozenGraph(add_surcharges(gerry_graph))
+            else:
+                self.graph = FrozenGraph(gerry_graph)
+        elif isinstance(graph, rustworkx.PyGraph):
+            gerry_graph = Graph.from_rustworkx(graph)
+            first_edge = graph.weighted_edge_list()[0][2]
             if first_edge.get("surcharge", None) is None:
                 self.graph = FrozenGraph(add_surcharges(gerry_graph))
             else:
@@ -140,7 +150,7 @@ class Partition:
 
         self.assignment = get_assignment(assignment, graph)
 
-        if set(self.assignment) != set(graph):
+        if set(self.assignment) != set(list(graph.node_indices())):
             raise KeyError("The graph's node labels do not match the Assignment's keys")
 
         if updaters is None:

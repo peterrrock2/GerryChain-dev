@@ -28,6 +28,8 @@ Last Updated: 25 April 2024
 
 import networkx as nx
 from networkx.algorithms import tree
+import rustworkx as rx
+import numpy as np
 
 from functools import partial
 from inspect import signature
@@ -49,75 +51,124 @@ from typing import (
 import warnings
 
 
-def predecessors(h: nx.Graph, root: Any) -> Dict:
-    return {a: b for a, b in nx.bfs_predecessors(h, root)}
+def predecessors(h: rx.PyGraph, root):
+    n_nodes = len(h.node_indices())
+
+    visited = [False] * n_nodes
+    visited[root] = True
+
+    queue = deque([root])
+
+    pred = {}
+
+    while queue:
+        node = queue.popleft()
+        for neighbor in h.neighbors(node):
+            if not visited[neighbor]:
+                pred[neighbor] = node
+                queue.append(neighbor)
+                visited[neighbor] = True
+    return pred
 
 
-def successors(h: nx.Graph, root: Any) -> Dict:
-    return {a: b for a, b in nx.bfs_successors(h, root)}
+def successors(h: rx.PyGraph, root):
+    n_nodes = len(h.node_indices())
+
+    visited = [False] * n_nodes
+    visited[root] = True
+
+    queue = deque([root])
+
+    succ = {}
+
+    while queue:
+        node = queue.popleft()
+        for neighbor in h.neighbors(node):
+            if not visited[neighbor]:
+                if node not in succ:
+                    succ[node] = []
+                succ[node].append(neighbor)
+                queue.append(neighbor)
+                visited[neighbor] = True
+    return succ
 
 
-def random_spanning_tree(graph: nx.Graph) -> nx.Graph:
+def pred_and_succ(h: rx.PyGraph, root):
+    succ = successors(h, root)
+    return {v: u for u, v_list in succ.items() for v in v_list}
+
+
+def make_tree(graph: rx.PyGraph) -> rx.PyGraph:
+    return rx.minimum_spanning_tree(graph, weight_fn=lambda edge: edge["random_weight"])
+
+
+def iter_add_surcharges(graph: rx.PyGraph):
+    # Add random weights to the edges
+    for edge in graph.edges():
+        weight = random.random()
+        edge["random_weight"] = weight + edge.get("surcharge", 0)
+
+
+def random_spanning_tree(graph: rx.PyGraph) -> rx.PyGraph:
     """
     Builds a spanning tree chosen by Kruskal's method using random weights.
 
-    :param graph: The input graph to build the spanning tree from. Should be a Networkx Graph.
+    :param graph: The input graph to build the spanning tree from. Should be a NetworkX Graph.
     :type graph: nx.Graph
-    :param region_surcharge: Dictionary of surcharges to add to the random
-        weights used in region-aware variants.
-    :type region_surcharge: Optional[Dict], optional
 
-    :returns: The maximal spanning tree represented as a Networkx Graph.
+    :returns: The spanning tree represented as a NetworkX Graph.
     :rtype: nx.Graph
     """
-    for edge in graph.edges():
-        weight = random.random()
-        graph.edges[edge]["random_weight"] = weight + graph.edges[edge].get(
-            "surcharge", 0
-        )
+    iter_add_surcharges(graph)
 
-    spanning_tree = tree.minimum_spanning_tree(
-        graph, algorithm="kruskal", weight="random_weight"
-    )
-    return spanning_tree
+    return make_tree(graph)
 
 
-def uniform_spanning_tree(
-    graph: nx.Graph, choice: Callable = random.choice
-) -> nx.Graph:
+def uniform_spanning_tree(graph: rx.PyGraph, choice=random.choice) -> rx.PyGraph:
     """
     Builds a spanning tree chosen uniformly from the space of all
     spanning trees of the graph. Uses Wilson's algorithm.
 
-    :param graph: Networkx Graph
-    :type graph: nx.Graph
+    :param graph: Rustworkx Graph
+    :type graph: rx.PyGraph
     :param choice: :func:`random.choice`. Defaults to :func:`random.choice`.
     :type choice: Callable, optional
 
     :returns: A spanning tree of the graph chosen uniformly at random.
     :rtype: nx.Graph
     """
-    root = choice(list(graph.node_indices))
-    tree_nodes = set([root])
-    next_node = {root: None}
 
-    for node in graph.node_indices:
-        u = node
-        while u not in tree_nodes:
-            next_node[u] = choice(list(graph.neighbors(u)))
-            u = next_node[u]
+    tree = graph.copy()
+    tree.clear_edges()
 
-        u = node
-        while u not in tree_nodes:
-            tree_nodes.add(u)
-            u = next_node[u]
+    neighbors = {node: list(graph.neighbors(node)) for node in graph.node_indices()}
 
-    G = nx.Graph()
-    for node in tree_nodes:
-        if next_node[node] is not None:
-            G.add_edge(node, next_node[node])
+    unvisited = set(graph.node_indices())
+    root = choice(list(unvisited))
+    unvisited.remove(root)
 
-    return G
+    # For a random walk, you have to start the walk at a random node
+    node_list = np.arange(len(graph.node_indices()))
+    np.random.shuffle(node_list)
+
+    for start_node in node_list:
+        node = start_node
+        walk = {node: None}
+        while node in unvisited:
+            next_node = choice(neighbors[node])
+            walk[node] = next_node
+            node = next_node
+
+        # Instead of unvisited.remove(start_node)
+        node = start_node
+        while node in walk:
+            next_node = walk[node]
+            if next_node is not None:
+                tree.add_edge(node, next_node, graph.get_edge_data(node, next_node))
+                unvisited.discard(node)
+            node = next_node
+
+    return tree
 
 
 class PopulatedGraph:
@@ -125,7 +176,7 @@ class PopulatedGraph:
     A class representing a graph with population information.
 
     :ivar graph: The underlying graph structure.
-    :type graph: nx.Graph
+    :type graph: rx.PyGraph
     :ivar subsets: A dictionary mapping nodes to their subsets.
     :type subsets: Dict
     :ivar population: A dictionary mapping nodes to their populations.
@@ -141,14 +192,14 @@ class PopulatedGraph:
 
     def __init__(
         self,
-        graph: nx.Graph,
+        graph: rx.PyGraph,
         populations: Dict,
         ideal_pop: Union[float, int],
         epsilon: float,
     ) -> None:
         """
         :param graph: The underlying graph structure.
-        :type graph: nx.Graph
+        :type graph: rx.PyGraph
         :param populations: A dictionary mapping nodes to their populations.
         :type populations: Dict
         :param ideal_pop: The ideal population for each district.
@@ -158,15 +209,15 @@ class PopulatedGraph:
         :type epsilon: float
         """
         self.graph = graph
-        self.subsets = {node: {node} for node in graph.nodes}
+        self.subsets = {node: {node} for node in graph.node_indices()}
         self.population = populations.copy()
         self.tot_pop = sum(self.population.values())
         self.ideal_pop = ideal_pop
         self.epsilon = epsilon
-        self._degrees = {node: graph.degree(node) for node in graph.nodes}
+        self._degrees = {node: graph.degree(node) for node in graph.node_indices()}
 
     def __iter__(self):
-        return iter(self.graph)
+        return iter(self.graph.node_indices())
 
     def degree(self, node) -> int:
         return self._degrees[node]
@@ -249,8 +300,7 @@ def find_balanced_edge_cuts_contraction(
     :returns: A list of balanced edge cuts.
     :rtype: List[Cut]
     """
-
-    root = choice([x for x in h if h.degree(x) > 1])
+    root = choice([x for x, deg in h._degrees.items() if deg > 1])
     # BFS predecessors for iteratively contracting leaves
     pred = predecessors(h.graph, root)
 
@@ -263,8 +313,10 @@ def find_balanced_edge_cuts_contraction(
             cuts.append(
                 Cut(
                     edge=e,
-                    weight=h.graph.edges[e].get("random_weight", random.random()),
-                    priority=h.graph.edges[e].get("priority", 0),
+                    weight=h.graph.get_edge_data(*e).get(
+                        "random_weight", random.random()
+                    ),
+                    priority=h.graph.get_edge_data(*e).get("priority", 0),
                     subset=frozenset(h.subsets[leaf].copy()),
                 )
             )
@@ -363,8 +415,8 @@ def find_balanced_edge_cuts_memoization(
     :returns: A list of balanced edge cuts.
     :rtype: List[Cut]
     """
-
-    root = choice([x for x in h if h.degree(x) > 1])
+    # possible_roots = [idx for idx in h.graph.node_indices() if h._degrees(h.graph.get_node_data(idx)[0])
+    root = choice([x for x, deg in h._degrees.items() if deg > 1])
     pred = predecessors(h.graph, root)
     succ = successors(h.graph, root)
     total_pop = h.tot_pop
@@ -381,8 +433,8 @@ def find_balanced_edge_cuts_memoization(
                 cuts.append(
                     Cut(
                         edge=e,
-                        weight=h.graph.edges[e].get("random_weight", wt),
-                        priority=h.graph.edges[e].get("priority", 0),
+                        weight=h.graph.get_edge_data(*e).get("random_weight", wt),
+                        priority=h.graph.get_edge_data(*e).get("priority", 0),
                         subset=frozenset(_part_nodes(node, succ)),
                     )
                 )
@@ -392,9 +444,11 @@ def find_balanced_edge_cuts_memoization(
                 cuts.append(
                     Cut(
                         edge=e,
-                        weight=h.graph.edges[e].get("random_weight", wt),
-                        priority=h.graph.edges[e].get("priority", 0),
-                        subset=frozenset(set(h.graph.nodes) - _part_nodes(node, succ)),
+                        weight=h.graph.get_edge_data(*e).get("random_weight", wt),
+                        priority=h.graph.get_edge_data(*e).get("priority", 0),
+                        subset=frozenset(
+                            set(h.graph.node_indices()) - _part_nodes(node, succ)
+                        ),
                     )
                 )
 
@@ -409,9 +463,11 @@ def find_balanced_edge_cuts_memoization(
             cuts.append(
                 Cut(
                     edge=e,
-                    weight=h.graph.edges[e].get("random_weight", wt),
-                    priority=h.graph.edges[e].get("priority", 0),
-                    subset=frozenset(set(h.graph.nodes) - _part_nodes(node, succ)),
+                    weight=h.graph.get_edge_data(*e).get("random_weight", wt),
+                    priority=h.graph.get_edge_data(*e).get("priority", 0),
+                    subset=frozenset(
+                        set(h.graph.node_indices()) - _part_nodes(node, succ)
+                    ),
                 )
             )
     return cuts
@@ -470,21 +526,11 @@ def _max_weight_choice(cut_edge_list: List[Cut]) -> Cut:
     if not isinstance(cut_edge_list[0], Cut) or cut_edge_list[0].weight is None:
         return random.choice(cut_edge_list)
 
-    return max(cut_edge_list, key=lambda cut: cut.weight)
-
-
-# def _power_set_sorted_by_size_then_sum(d):
-#     power_set = [
-#         s for i in range(1, len(d) + 1) for s in itertools.combinations(d.keys(), i)
-#     ]
-
-#     # Sort the subsets in descending order based on
-#     # the sum of their corresponding values in the dictionary
-#     sorted_power_set = sorted(
-#         power_set, key=lambda s: (len(s), sum(d[i] for i in s)), reverse=True
-#     )
-
-#     return sorted_power_set
+    try:
+        return max(cut_edge_list, key=lambda cut: cut.weight)
+    except Exception as e:
+        print(cut_edge_list)
+        raise ValueError("No cuts found in the cut_edge_list.")
 
 
 # Note that the populated graph and the region surcharge are passed
@@ -530,32 +576,6 @@ def _region_preferred_max_weight_choice(
         surcharge.
     :rtype: Cut
     """
-    # # Prepare data for efficient access
-    # edge_region_info = {
-    #     cut: {
-    #         key: (
-    #             populated_graph.graph.nodes[cut.edge[0]].get(key),
-    #             populated_graph.graph.nodes[cut.edge[1]].get(key),
-    #         )
-    #         for key in region_surcharge
-    #     }
-    #     for cut in cut_edge_list
-    # }
-
-    # # Generate power set sorted by surcharge, then filter cuts based
-    # # on region matching
-    # power_set = _power_set_sorted_by_size_then_sum(region_surcharge)
-    # for region_combination in power_set:
-    #     suitable_cuts = [
-    #         cut
-    #         for cut in cut_edge_list
-    #         if all(
-    #             edge_region_info[cut][key][0] != edge_region_info[cut][key][1]
-    #             for key in region_combination
-    #         )
-    #     ]
-    #     if suitable_cuts:
-    #         return _max_weight_choice(suitable_cuts)
 
     sutiable_cuts = []
     # The lower the priority, the higher the importance because sorting
@@ -571,12 +591,12 @@ def _region_preferred_max_weight_choice(
 
 
 def bipartition_tree(
-    graph: nx.Graph,
+    graph: rx.PyGraph,
     pop_col: str,
     pop_target: Union[int, float],
     epsilon: float,
     node_repeats: int = 1,
-    spanning_tree: Optional[nx.Graph] = None,
+    spanning_tree: Optional[rx.PyGraph] = None,
     spanning_tree_fn: Callable = random_spanning_tree,
     # region_surcharge: Optional[Dict] = None,
     balance_edge_fn: Callable = find_balanced_edge_cuts_memoization,
@@ -655,7 +675,9 @@ def bipartition_tree(
     if "one_sided_cut" in signature(balance_edge_fn).parameters:
         balance_edge_fn = partial(balance_edge_fn, one_sided_cut=one_sided_cut)
 
-    populations = {node: graph.nodes[node][pop_col] for node in graph.node_indices}
+    populations = {
+        idx: graph.get_node_data(idx)[1][pop_col] for idx in graph.node_indices()
+    }
 
     possible_cuts: List[Cut] = []
     if spanning_tree is None:
@@ -668,12 +690,8 @@ def bipartition_tree(
         if restarts == node_repeats:
             spanning_tree = spanning_tree_fn(graph)
             restarts = 0
-        h = PopulatedGraph(spanning_tree, populations, pop_target, epsilon)
 
-        # is_region_cut = (
-        #     "region_surcharge" in signature(cut_choice).parameters
-        #     and "populated_graph" in signature(cut_choice).parameters
-        # )
+        h = PopulatedGraph(spanning_tree, populations, pop_target, epsilon)
 
         # This returns a list of Cut objects with attributes edge and subset
         possible_cuts = balance_edge_fn(h, choice=choice)
@@ -755,7 +773,9 @@ def _bipartition_tree_random_all(
         attempts.
     """
 
-    populations = {node: graph.nodes[node][pop_col] for node in graph.node_indices}
+    populations = {
+        node: graph.get_node_data(node)[1][pop_col] for node in graph.node_indices()
+    }
 
     possible_cuts = []
     if spanning_tree is None:
@@ -911,14 +931,15 @@ def epsilon_tree_bipartition(
         )
 
     flips = {}
-    remaining_nodes = graph.node_indices
+    remaining_nodes_base = set([node[0] for node in graph.nodes()])
 
     lb_pop = pop_target * (1 - epsilon)
     ub_pop = pop_target * (1 + epsilon)
     check_pop = lambda x: lb_pop <= x <= ub_pop
 
-    nodes = method(
-        graph.subgraph(remaining_nodes),
+    # Note graph here might be a subgraph of a larger graph
+    subgraph_indexed_nodes = method(
+        graph,
         pop_col=pop_col,
         pop_target=pop_target,
         epsilon=epsilon,
@@ -926,24 +947,27 @@ def epsilon_tree_bipartition(
         one_sided_cut=False,
     )
 
-    if nodes is None:
+    nodes_base = set({graph[idx][0] for idx in subgraph_indexed_nodes})
+
+    if nodes_base is None:
         raise BalanceError()
 
     part_pop = 0
-    for node in nodes:
-        flips[node] = parts[-2]
-        part_pop += graph.nodes[node][pop_col]
+    for base_node, subgraph_node in zip(nodes_base, subgraph_indexed_nodes):
+        flips[base_node] = parts[-2]
+        part_pop += graph.get_node_data(subgraph_node)[1][pop_col]
 
     if not check_pop(part_pop):
         raise PopulationBalanceError()
 
-    remaining_nodes -= nodes
+    remaining_nodes_base -= nodes_base
+    remaining_nodes_subgraph = set(graph.node_indices()) - set(subgraph_indexed_nodes)
 
     # All of the remaining nodes go in the last part
     part_pop = 0
-    for node in remaining_nodes:
-        flips[node] = parts[-1]
-        part_pop += graph.nodes[node][pop_col]
+    for base_node, subgraph_node in zip(remaining_nodes_base, remaining_nodes_subgraph):
+        flips[base_node] = parts[-1]
+        part_pop += graph.get_node_data(subgraph_node)[1][pop_col]
 
     if not check_pop(part_pop):
         raise PopulationBalanceError()
@@ -989,7 +1013,7 @@ def recursive_tree_part(
     :rtype: dict
     """
     flips = {}
-    remaining_nodes = graph.node_indices
+    remaining_nodes = set(list(graph.node_indices()))
     # We keep a running tally of deviation from ``epsilon`` at each partition
     # and use it to tighten the population constraints on a per-partition
     # basis such that every partition, including the last partition, has a
@@ -1009,14 +1033,17 @@ def recursive_tree_part(
         new_pop_target = (min_pop + max_pop) / 2
 
         try:
-            nodes = method(
-                graph.subgraph(remaining_nodes),
+            subgraph = graph.subgraph(list(remaining_nodes))
+
+            subgraph_indexed_nodes = method(
+                subgraph,
                 pop_col=pop_col,
                 pop_target=new_pop_target,
                 epsilon=(max_pop - min_pop) / (2 * new_pop_target),
                 node_repeats=node_repeats,
                 one_sided_cut=True,
             )
+            nodes = set({subgraph[idx][0] for idx in subgraph_indexed_nodes})
         except Exception:
             raise
 
@@ -1026,7 +1053,7 @@ def recursive_tree_part(
         part_pop = 0
         for node in nodes:
             flips[node] = part
-            part_pop += graph.nodes[node][pop_col]
+            part_pop += graph[node][pop_col]
 
         if not check_pop(part_pop):
             raise PopulationBalanceError()
@@ -1036,8 +1063,10 @@ def recursive_tree_part(
 
     # After making n-2 districts, we need to make sure that the last
     # two districts are both balanced.
-    nodes = method(
-        graph.subgraph(remaining_nodes),
+    subgraph = graph.subgraph(list(remaining_nodes))
+
+    subgraph_indexed_nodes = method(
+        subgraph,
         pop_col=pop_col,
         pop_target=pop_target,
         epsilon=epsilon,
@@ -1045,13 +1074,15 @@ def recursive_tree_part(
         one_sided_cut=False,
     )
 
+    nodes = set({subgraph[idx][0] for idx in subgraph_indexed_nodes})
+
     if nodes is None:
         raise BalanceError()
 
     part_pop = 0
     for node in nodes:
         flips[node] = parts[-2]
-        part_pop += graph.nodes[node][pop_col]
+        part_pop += graph[node][pop_col]
 
     if not check_pop(part_pop):
         raise PopulationBalanceError()
@@ -1062,7 +1093,7 @@ def recursive_tree_part(
     part_pop = 0
     for node in remaining_nodes:
         flips[node] = parts[-1]
-        part_pop += graph.nodes[node][pop_col]
+        part_pop += graph[node][pop_col]
 
     if not check_pop(part_pop):
         raise PopulationBalanceError()
@@ -1077,6 +1108,7 @@ def get_seed_chunks(
     pop_target: Union[int, float],
     pop_col: str,
     epsilon: float,
+    remaining_node_dict: dict,
     node_repeats: int = 1,
     method: Callable = partial(bipartition_tree_random, max_attempts=10000),
 ) -> List[List[int]]:
@@ -1114,14 +1146,16 @@ def get_seed_chunks(
         new_epsilon = epsilon
 
     chunk_pop = 0
-    for node in graph.node_indices:
-        chunk_pop += graph.nodes[node][pop_col]
+    for node in graph.node_indices():
+        chunk_pop += graph.get_node_data(node)[1][pop_col]
+
+    base_to_passed_dict = {v: k for k, v in remaining_node_dict.items()}
 
     while True:
         epsilon = abs(epsilon)
 
         flips = {}
-        remaining_nodes = set(graph.nodes)
+        remaining_nodes_passed = set(list(graph.node_indices()))
 
         min_pop = pop_target * (1 - new_epsilon) * num_chunks_left
         max_pop = pop_target * (1 + new_epsilon) * num_chunks_left
@@ -1134,28 +1168,33 @@ def get_seed_chunks(
         for i in range(len(parts[:-1])):
             part = parts[i]
 
-            nodes = method(
-                graph.subgraph(remaining_nodes),
+            subgraph = graph.subgraph(list(remaining_nodes_passed))
+
+            subgraph_indexed_nodes = method(
+                subgraph,
                 pop_col=pop_col,
                 pop_target=chunk_pop_target,
                 epsilon=new_new_epsilon,
                 node_repeats=node_repeats,
             )
 
-            if nodes is None:
+            nodes_base = set({subgraph[idx][0] for idx in subgraph_indexed_nodes})
+            nodes_passed = set({base_to_passed_dict[node] for node in nodes_base})
+
+            if nodes_base is None:
                 raise BalanceError()
 
-            for node in nodes:
+            for node in nodes_base:
                 flips[node] = part
-            remaining_nodes -= nodes
+            remaining_nodes_passed -= nodes_passed
 
             # All of the remaining nodes go in the last part
-            for node in remaining_nodes:
-                flips[node] = parts[-1]
+            for node in remaining_nodes_passed:
+                flips[remaining_node_dict[node]] = parts[-1]
 
         part_pop = 0
-        for node in remaining_nodes:
-            part_pop += graph.nodes[node][pop_col]
+        for node in remaining_nodes_passed:
+            part_pop += graph.get_node_data(node)[1][pop_col]
         part_pop_as_dist = part_pop / num_chunks_left
         fake_epsilon = epsilon
         if num_chunks_left != 1:
@@ -1221,6 +1260,7 @@ def recursive_seed_part_inner(
     pop_target: Union[float, int],
     pop_col: str,
     epsilon: float,
+    remaining_node_dict: dict,
     method: Callable = partial(bipartition_tree, max_attempts=10000),
     node_repeats: int = 1,
     n: Optional[int] = None,
@@ -1290,12 +1330,18 @@ def recursive_seed_part_inner(
     else:
         raise ValueError("n must be None or a positive integer")
 
+    # remaining_nodes goes child: parent
+    remaining_nodes_passed = set(list(remaining_node_dict.keys()))
+    remaining_base_graph_nodes = set(list(remaining_node_dict.values()))
+
+    base_to_passed_dict = {v: k for k, v in remaining_node_dict.items()}
+
     # base case
     if num_dists == 1:
-        return [set(graph.nodes)]
+        return [remaining_base_graph_nodes]
 
     if num_dists == 2:
-        nodes = method(
+        subgraph_indexed_nodes = method(
             graph,
             pop_col=pop_col,
             pop_target=pop_target,
@@ -1304,27 +1350,42 @@ def recursive_seed_part_inner(
             one_sided_cut=False,
         )
 
-        return [set(nodes), set(graph.nodes) - set(nodes)]
+        # nodes = set({graph[idx][0] for idx in subgraph_indexed_nodes})
+        nodes = set({remaining_node_dict[idx] for idx in subgraph_indexed_nodes})
+        return [nodes, remaining_base_graph_nodes - nodes]
 
     # bite off a district and recurse into the remaining subgraph
     elif num_chunks is None or num_dists % num_chunks != 0:
-        remaining_nodes = set(graph.nodes)
-        nodes = method(
-            graph.subgraph(remaining_nodes),
+        subgraph = graph.subgraph(list(remaining_nodes_passed))
+
+        subgraph_indexed_nodes = method(
+            subgraph,
             pop_col=pop_col,
             pop_target=pop_target,
             epsilon=epsilon,
             node_repeats=node_repeats,
             one_sided_cut=True,
         )
-        remaining_nodes -= nodes
-        assignment = [nodes] + recursive_seed_part_inner(
-            graph.subgraph(remaining_nodes),
-            num_dists - 1,
-            pop_target,
-            pop_col,
-            epsilon,
-            method,
+
+        nodes_base = set({subgraph[idx][0] for idx in subgraph_indexed_nodes})
+        nodes_passed = set({base_to_passed_dict[node] for node in nodes_base})
+
+        remaining_nodes_passed -= nodes_passed
+        remaining_subgraph_passed = graph.subgraph(list(remaining_nodes_passed))
+
+        remaining_subgraph_node_dict = {
+            idx: remaining_subgraph_passed.get_node_data(idx)[0]
+            for idx in remaining_subgraph_passed.node_indices()
+        }
+
+        assignment = [nodes_base] + recursive_seed_part_inner(
+            graph=remaining_subgraph_passed,
+            num_dists=num_dists - 1,
+            pop_target=pop_target,
+            pop_col=pop_col,
+            epsilon=epsilon,
+            remaining_node_dict=remaining_subgraph_node_dict,
+            method=method,
             n=n,
             ceil=ceil,
         )
@@ -1332,24 +1393,34 @@ def recursive_seed_part_inner(
     # split graph into num_chunks chunks, and recurse into each chunk
     elif num_dists % num_chunks == 0:
         chunks = get_seed_chunks(
-            graph,
-            num_chunks,
-            num_dists,
-            pop_target,
-            pop_col,
-            epsilon,
+            graph=graph,
+            num_chunks=num_chunks,
+            num_dists=num_dists,
+            pop_target=pop_target,
+            pop_col=pop_col,
+            epsilon=epsilon,
+            remaining_node_dict=remaining_node_dict,
             method=partial(method, one_sided_cut=True),
         )
 
         assignment = []
         for chunk in chunks:
+            subgraph_coord_chunk = [base_to_passed_dict[node] for node in chunk]
+
+            subgraph = graph.subgraph(subgraph_coord_chunk)
+
+            remaining_nodes_chunk_dict = {
+                idx: subgraph.get_node_data(idx)[0] for idx in subgraph.node_indices()
+            }
+
             chunk_assignment = recursive_seed_part_inner(
-                graph.subgraph(chunk),
-                num_dists // num_chunks,
-                pop_target,
-                pop_col,
-                epsilon,
-                method,
+                graph=subgraph,
+                num_dists=num_dists // num_chunks,
+                pop_target=pop_target,
+                pop_col=pop_col,
+                epsilon=epsilon,
+                remaining_node_dict=remaining_nodes_chunk_dict,
+                method=method,
                 n=n,
                 ceil=ceil,
             )
@@ -1412,6 +1483,7 @@ def recursive_seed_part(
         pop_target,
         pop_col,
         epsilon,
+        remaining_node_dict={i: i for i in graph.node_indices()},
         method=method,
         node_repeats=node_repeats,
         n=n,

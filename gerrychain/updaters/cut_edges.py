@@ -109,7 +109,7 @@ def cut_edges(partition):
     if not parent:
         return {
             tuple(sorted(edge))
-            for edge in partition.graph.edges
+            for edge in partition.graph.edge_list()
             if partition.crosses_parts(edge)
         }
     # Edges that weren't cut, but now are cut

@@ -1,16 +1,3 @@
-"""
-This module provides tools for working with graphs in the context of geographic data.
-It extends the functionality of the NetworkX library, adding support for spatial data structures,
-geographic projections, and serialization to and from JSON format.
-
-This module is designed to be used in conjunction with geopandas, shapely, and pandas libraries,
-facilitating the integration of graph-based algorithms with geographic information systems (GIS).
-
-Note:
-This module relies on NetworkX, pandas, and geopandas, which should be installed and
-imported as required.
-"""
-
 import functools
 import json
 from typing import Any
@@ -52,10 +39,6 @@ def json_serialize(input_object: Any) -> Optional[int]:
     return None
 
 
-# Note: It would probably be better to change the whole API for this class
-# so that each instance has an attribute called graph that contains the
-# underlying rustworkx.PyGraph object. Maybe change the name to something
-# like GraphData
 class Graph(rustworkx.PyGraph):
     def __repr__(self):
         return "<Graph [{} nodes, {} edges]>".format(
@@ -64,20 +47,6 @@ class Graph(rustworkx.PyGraph):
 
     def __new__(cls, multigraph=False):
         return super(Graph, cls).__new__(cls, multigraph, attrs=dict())
-
-    def __getattribute__(self, name: str) -> Any:
-        return super().__getattribute__(name)
-
-    def __getitem__(self, node_idx: int) -> dict:
-        """
-        A slight modification to return the dict of node attributes stored at a node
-        rather than the tuple (node_index, node_data_dict) to make working with the
-        graph more intuitive.
-
-        :param node_idx: Index of the node to look up.
-        :type node_idx: int
-        """
-        return self.get_node_data(node_idx)[1]
 
     def graph(self):
         """
@@ -92,43 +61,7 @@ class Graph(rustworkx.PyGraph):
         )
         return self.attrs
 
-    @classmethod
-    def from_rustworkx(cls, graph: rustworkx.PyGraph) -> "Graph":
-        """
-        Create a Graph instance from a rustworkx.PyGraph object.
-
-        :param graph: The rustworkx graph to be converted.
-        :type graph: rustworkx.PyGraph
-
-        :returns: The converted graph as an instance of this class.
-        :rtype: Graph
-        """
-        g = cls()
-        if len(graph.node_indices()) == 0:
-            raise ValueError(
-                "When making a Graph from a rustworkx.PyGraph object, found that "
-                "the input graph has no nodes."
-            )
-
-        if isinstance(graph.get_node_data(0), int):
-            g.add_nodes_from([(node, {}) for node in graph.nodes()])
-        else:
-            g.add_nodes_from(graph.nodes())
-
-        if len(graph.edge_list()) == 0:
-            return g
-
-        for u, v, data in graph.weighted_edge_list():
-            if data is None:
-                g.add_edge(u, v, {})
-            elif isinstance(data, dict):
-                g.add_edge(u, v, data)
-            else:
-                raise TypeError(
-                    "Expected edge payload for the PyGraph object to be a dict"
-                )
-        return g
-
+    # Done
     @classmethod
     def from_networkx(cls, graph: networkx.Graph) -> "Graph":
         """
@@ -152,16 +85,13 @@ class Graph(rustworkx.PyGraph):
     # Done
     def to_networkx(self) -> networkx.Graph:
         new_nx = networkx.Graph()
-        new_nx.add_nodes_from(
-            [(idx, self.get_node_data(idx)[1]) for idx in self.node_indices()]
-        )
+        new_nx.add_nodes_from(self.nodes())
         new_nx.add_edges_from(
             list([(u, v, dict(data)) for u, v, data in self.weighted_edge_list()])
         )
-        if self.attrs is not None:
-            for key, value in self.attrs.items():
-                if key != "data":
-                    new_nx.graph[key] = value
+        for key, value in self.attrs.items():
+            if key != "data":
+                new_nx.graph[key] = value
         return new_nx
 
     @classmethod
@@ -193,7 +123,6 @@ class Graph(rustworkx.PyGraph):
 
         for edge_data_list in data["adjacency"]:
             for edge_data in edge_data_list:
-                edge_data.pop("random_weight", None)
                 if not keep_surcharge_and_priority:
                     edge_data.pop("surcharge", None)
                     edge_data.pop("priority", None)
@@ -339,25 +268,24 @@ class Graph(rustworkx.PyGraph):
         else:
             df = dataframe
 
-        index_name = df.index.name
-        df = df.reset_index()
-
         # Generate dict of dicts of dicts with shared perimeters according
         # to the requested adjacency rule
         adjacencies = neighbors(df, adjacency)
         graph = cls.from_networkx(networkx.Graph(adjacencies))
 
         graph.geometry = df.geometry
+
         graph.issue_warnings()
 
         # Add "exterior" perimeters to the boundary nodes
         add_boundary_perimeters(graph, df.geometry)
 
-        graph.add_data(df, columns=cols_to_add)
+        # Add area data to the nodes
+        areas = df.geometry.area.to_dict()
+        for node, data in graph.nodes():
+            data["area"] = areas[node]
 
-        areas = pd.DataFrame(index=df.index)
-        areas["area"] = df.geometry.area
-        graph.join(areas, columns=["area"])
+        graph.add_data(df, columns=cols_to_add)
 
         if crs_override is not None:
             df.set_crs(crs_override, inplace=True)
@@ -389,6 +317,17 @@ class Graph(rustworkx.PyGraph):
         """
         return self.nodes[node][field]
 
+    def __getitem__(self, node_idx: int) -> dict:
+        """
+        A slight modification to return the dict of node attributes stored at a node
+        rather than the tuple (node_index, node_data_dict) to make working with the
+        graph more intuitive.
+
+        :param node_idx: Index of the node to look up.
+        :type node_idx: int
+        """
+        return self.get_node_data(node_idx)[1]
+
     # NOT DONE
     def add_data(
         self, df: pd.DataFrame, columns: Optional[Iterable[str]] = None
@@ -408,6 +347,7 @@ class Graph(rustworkx.PyGraph):
         if columns is None:
             columns = list(df.columns)
 
+        print(f"In add_data: {columns}")
         self.join(df, columns=columns)
 
         if "data" in self.attrs:
@@ -452,6 +392,9 @@ class Graph(rustworkx.PyGraph):
 
         column_dictionaries = df.to_dict()
 
+        print(column_dictionaries)
+        print(self.nodes())
+
         if left_index is not None:
             ids_to_index = {node: data[left_index] for node, data in self.nodes()}
         else:
@@ -468,6 +411,7 @@ class Graph(rustworkx.PyGraph):
 
         for node_id, attributes in node_attributes.items():
             self.get_node_data(node_id)[1].update(attributes)
+            print(self.get_node_data(node_id))
 
     @property
     def connected_components(self) -> list:
@@ -575,6 +519,7 @@ def add_boundary_perimeters(graph: Graph, geometries: pd.Series) -> None:
             node_data["boundary_perim"] = boundary_perimeter
 
 
+# Done
 def check_dataframe(df: pd.DataFrame) -> None:
     """
     :returns: None
@@ -586,6 +531,7 @@ def check_dataframe(df: pd.DataFrame) -> None:
             warnings.warn("NA values found in column {}!".format(column))
 
 
+# Done
 def remove_geometries(data: networkx.Graph) -> None:
     """
     Remove geometry attributes from NetworkX adjacency data object,
@@ -610,6 +556,7 @@ def remove_geometries(data: networkx.Graph) -> None:
             del node[key]
 
 
+# Done
 def convert_geometries_to_geojson(data: networkx.Graph) -> None:
     """
     Convert geometry attributes in a NetworkX adjacency data object
@@ -688,14 +635,22 @@ class FrozenGraph:
         return self.size
 
     def __getitem__(self, __name: str) -> Any:
-        return self.graph[__name][1]
+        return self.graph[__name]
 
-    # def __iter__(self) -> Iterable[Any]:
-    #     yield from range(self.size)
+    def __iter__(self) -> Iterable[Any]:
+        yield from range(self.size)
 
     @functools.lru_cache(16384)
     def neighbors(self, n: Any) -> Tuple[Any, ...]:
         return tuple(self.graph.neighbors(n))
+
+    @functools.cached_property
+    def node_indices(self) -> rustworkx.NodeIndices:
+        return self.graph.node_indices
+
+    @functools.cached_property
+    def edge_indices(self) -> rustworkx.EdgeIndices:
+        return self.graph.edge_indices
 
     @functools.lru_cache(16384)
     def degree(self, n: Any) -> int:
@@ -703,8 +658,8 @@ class FrozenGraph:
 
     @functools.lru_cache(65536)
     def lookup(self, node: Any, field: str) -> Any:
-        return self.graph.get_node_data(node)[1][field]
+        return self.graph[node][field]
 
     # CHECK THIS
     def subgraph(self, nodes: Iterable[Any]) -> "FrozenGraph":
-        return FrozenGraph(self.graph.subgraph(list(nodes)))
+        return FrozenGraph(self.graph.subgraph(nodes))

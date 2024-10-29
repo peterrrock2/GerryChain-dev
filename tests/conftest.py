@@ -4,6 +4,7 @@ from gerrychain import Graph, Partition
 import random
 from gerrychain.updaters import cut_edges
 import networkx as nx
+import rustworkx as rx
 
 random.seed(2018)
 
@@ -15,8 +16,9 @@ def three_by_three_grid():
     3 4 5
     6 7 8
     """
-    graph = Graph()
-    graph.add_edges_from(
+    graph = rx.PyGraph()
+    graph.add_nodes_from(list(range(9)))
+    graph.add_edges_from_no_data(
         [
             (0, 1),
             (0, 3),
@@ -32,7 +34,7 @@ def three_by_three_grid():
             (7, 8),
         ]
     )
-    return graph
+    return Graph.from_rustworkx(graph)
 
 
 @pytest.fixture
@@ -47,7 +49,7 @@ def four_by_five_grid_for_opt():
     #  5  6  7  8  9
     #  0  1  2  3  4
 
-    graph = Graph()
+    graph = nx.Graph()
     graph.add_nodes_from(
         [
             (0, {"population": 10, "opt_value": 1, "MVAP": 2}),
@@ -109,7 +111,7 @@ def four_by_five_grid_for_opt():
         ]
     )
 
-    return graph
+    return Graph.from_networkx(graph)
 
 
 @pytest.fixture

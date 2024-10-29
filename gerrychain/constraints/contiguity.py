@@ -2,6 +2,7 @@ from heapq import heappop, heappush
 from itertools import count
 
 import networkx as nx
+import rustworkx as rx
 from typing import Callable, Any, Dict, Set
 from ..partition import Partition
 import random
@@ -177,7 +178,8 @@ def contiguous(partition: Partition) -> bool:
     :rtype: bool
     """
     return all(
-        nx.is_connected(partition.subgraphs[part]) for part in affected_parts(partition)
+        rx.is_connected(partition.subgraphs[part].graph)
+        for part in affected_parts(partition)
     )
 
 
@@ -235,10 +237,17 @@ def contiguous_components(partition: Partition) -> Dict[int, list]:
         subgraphs of that part of the partition
     :rtype: dict
     """
-    return {
-        part: [subgraph.subgraph(nodes) for nodes in nx.connected_components(subgraph)]
-        for part, subgraph in partition.subgraphs.items()
-    }
+    component_dict = {}
+
+    for part, subgraph in partition.subgraphs.items():
+        parent_graph_connected_components = set()
+        for component in rx.connected_components(subgraph.graph):
+            parent_graph_connected_components.add(
+                frozenset([subgraph.nodes()[idx][0] for idx in component])
+            )
+        component_dict[part] = parent_graph_connected_components
+
+    return component_dict
 
 
 def _bfs(graph: Dict[int, list]) -> bool:

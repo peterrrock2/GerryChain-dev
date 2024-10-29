@@ -66,6 +66,7 @@ target/
 .venv
 .docs_venv
 junit.xml
+dev_files/
 
 # crapple
 .DS_Store

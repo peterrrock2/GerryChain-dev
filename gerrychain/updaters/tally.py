@@ -36,7 +36,7 @@ class DataTally:
 
         def initialize_tally(partition):
             if isinstance(self.data, str):
-                nodes = partition.graph.nodes
+                nodes = partition.graph.node_indices()
                 attribute = self.data
                 self.data = {node: nodes[node][attribute] for node in nodes}
 

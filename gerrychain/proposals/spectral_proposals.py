@@ -32,8 +32,8 @@ def spectral_cut(
     n = len(nlist)
 
     if weight_type == "random":
-        for edge in graph.edge_indices:
-            graph.edges[edge]["weight"] = random.random()
+        for edge in graph.edge_indices():
+            graph.edges()[edge]["weight"] = random.random()
 
     if lap_type == "normalized":
         LAP = (nx.normalized_laplacian_matrix(graph)).todense()

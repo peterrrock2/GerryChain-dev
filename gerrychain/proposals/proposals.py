@@ -16,7 +16,7 @@ def propose_any_node_flip(partition: Partition) -> Partition:
     :rtype: Partition
     """
 
-    node = random.choice(tuple(partition.graph))
+    node = random.choice(tuple(partition.graph.node_indices()))
     newpart = random.choice(tuple(partition.parts))
 
     return partition.flip({node: newpart})

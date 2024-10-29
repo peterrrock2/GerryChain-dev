@@ -10,6 +10,7 @@ from pyproj import CRS
 
 from gerrychain.graph import Graph
 from gerrychain.graph.geo import GeometryError
+import networkx
 
 
 @pytest.fixture
@@ -27,6 +28,7 @@ def geodataframe():
 def gdf_with_data(geodataframe):
     geodataframe["data"] = list(range(len(geodataframe)))
     geodataframe["data2"] = list(range(len(geodataframe)))
+    geodataframe["MOCKGEOID"] = ["166481", "156851", "895499", "564816"]
     return geodataframe
 
 
@@ -64,27 +66,32 @@ def target_file():
         yield filename
 
 
+def edge_set_equal(set1, set2):
+    return {(y, x) for x, y in set1} | set1 == {(y, x) for x, y in set2} | set2
+
+
 def test_add_data_to_graph_can_handle_column_names_that_start_with_numbers():
-    graph = Graph([("01", "02"), ("02", "03"), ("03", "01")])
-    df = pandas.DataFrame({"16SenDVote": [20, 30, 50], "node": ["01", "02", "03"]})
-    df = df.set_index("node")
+    nx_graph = networkx.Graph([(0, 1), (1, 2), (2, 0)])
+    graph = Graph.from_networkx(nx_graph)
+    df = pandas.DataFrame({"16SenDVote": [20, 30, 50]})
 
     graph.add_data(df, ["16SenDVote"])
 
-    assert graph.nodes["01"]["16SenDVote"] == 20
-    assert graph.nodes["02"]["16SenDVote"] == 30
-    assert graph.nodes["03"]["16SenDVote"] == 50
+    assert graph[0]["16SenDVote"] == 20
+    assert graph[1]["16SenDVote"] == 30
+    assert graph[2]["16SenDVote"] == 50
 
 
 def test_join_can_handle_right_index():
-    graph = Graph([("01", "02"), ("02", "03"), ("03", "01")])
-    df = pandas.DataFrame({"16SenDVote": [20, 30, 50], "node": ["01", "02", "03"]})
+    nx_graph = networkx.Graph([(0, 1), (1, 2), (2, 0)])
+    graph = Graph.from_networkx(nx_graph)
+    df = pandas.DataFrame({"16SenDVote": [20, 30, 50], "node": [0, 1, 2]})
 
     graph.join(df, ["16SenDVote"], right_index="node")
 
-    assert graph.nodes["01"]["16SenDVote"] == 20
-    assert graph.nodes["02"]["16SenDVote"] == 30
-    assert graph.nodes["03"]["16SenDVote"] == 50
+    assert graph[0]["16SenDVote"] == 20
+    assert graph[1]["16SenDVote"] == 30
+    assert graph[2]["16SenDVote"] == 50
 
 
 def test_make_graph_from_dataframe_creates_graph(geodataframe):
@@ -95,16 +102,17 @@ def test_make_graph_from_dataframe_creates_graph(geodataframe):
 def test_make_graph_from_dataframe_preserves_df_index(geodataframe):
     df = geodataframe.set_index("ID")
     graph = Graph.from_geodataframe(df)
-    assert set(graph.nodes) == {"a", "b", "c", "d"}
+    assert graph[0]["geometry"] == df.loc["a", "geometry"]
+    assert graph[1]["geometry"] == df.loc["b", "geometry"]
+    assert graph[2]["geometry"] == df.loc["c", "geometry"]
+    assert graph[3]["geometry"] == df.loc["d", "geometry"]
 
 
 def test_make_graph_from_dataframe_gives_correct_graph(geodataframe):
     df = geodataframe.set_index("ID")
     graph = Graph.from_geodataframe(df)
 
-    assert edge_set_equal(
-        set(graph.edges), {("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")}
-    )
+    assert edge_set_equal(set(graph.edge_list()), {(0, 2), (0, 1), (1, 3), (2, 3)})
 
 
 def test_make_graph_works_with_queen_adjacency(geodataframe):
@@ -112,8 +120,8 @@ def test_make_graph_works_with_queen_adjacency(geodataframe):
     graph = Graph.from_geodataframe(df, adjacency="queen")
 
     assert edge_set_equal(
-        set(graph.edges),
-        {("a", "b"), ("a", "c"), ("b", "d"), ("c", "d"), ("a", "d"), ("b", "c")},
+        set(graph.edge_list()),
+        {(0, 1), (0, 2), (1, 3), (2, 3), (0, 3), (1, 2)},
     )
 
 
@@ -122,8 +130,8 @@ def test_can_pass_queen_or_rook_strings_to_control_adjacency(geodataframe):
     graph = Graph.from_geodataframe(df, adjacency="queen")
 
     assert edge_set_equal(
-        set(graph.edges),
-        {("a", "b"), ("a", "c"), ("b", "d"), ("c", "d"), ("a", "d"), ("b", "c")},
+        set(graph.edge_list()),
+        {(0, 1), (0, 2), (1, 3), (2, 3), (0, 3), (1, 2)},
     )
 
 
@@ -131,72 +139,66 @@ def test_can_insist_on_not_reprojecting(geodataframe):
     df = geodataframe.set_index("ID")
     graph = Graph.from_geodataframe(df, reproject=False)
 
-    for node in ("a", "b", "c", "d"):
-        assert graph.nodes[node]["area"] == 1
+    for node in (0, 1, 2, 3):
+        assert graph[node]["area"] == 1
 
-    for edge in graph.edges:
-        assert graph.edges[edge]["shared_perim"] == 1
+    for edge in graph.edge_indices():
+        assert graph.edges()[edge]["shared_perim"] == 1
 
 
 def test_does_not_reproject_by_default(geodataframe):
     df = geodataframe.set_index("ID")
     graph = Graph.from_geodataframe(df)
 
-    for node in ("a", "b", "c", "d"):
-        assert graph.nodes[node]["area"] == 1.0
+    for node in (0, 1, 2, 3):
+        assert graph[node]["area"] == 1
 
-    for edge in graph.edges:
-        assert graph.edges[edge]["shared_perim"] == 1.0
+    for edge in graph.edge_indices():
+        assert graph.edges()[edge]["shared_perim"] == 1
 
 
 def test_reproject(geodataframe):
-    # I don't know what the areas and perimeters are in UTM for these made-up polygons,
-    # but I'm pretty sure they're not 1.
     df = geodataframe.set_index("ID")
     graph = Graph.from_geodataframe(df, reproject=True)
 
-    for node in ("a", "b", "c", "d"):
-        assert graph.nodes[node]["area"] != 1
+    for node in (0, 1, 2, 3):
+        assert graph[node]["area"] != 1
 
-    for edge in graph.edges:
-        assert graph.edges[edge]["shared_perim"] != 1
+    for edge in graph.edge_indices():
+        assert graph.edges()[edge]["shared_perim"] != 1
 
 
 def test_identifies_boundary_nodes(geodataframe_with_boundary):
     df = geodataframe_with_boundary.set_index("ID")
     graph = Graph.from_geodataframe(df)
 
-    for node in ("a", "b", "c", "e"):
-        assert graph.nodes[node]["boundary_node"]
-    assert not graph.nodes["d"]["boundary_node"]
+    for node in (0, 1, 2, 4):
+        assert graph[node]["boundary_node"]
+    assert not graph[3]["boundary_node"]
 
 
 def test_computes_boundary_perims(geodataframe_with_boundary):
     df = geodataframe_with_boundary.set_index("ID")
     graph = Graph.from_geodataframe(df, reproject=False)
 
-    expected = {"a": 5, "e": 5, "b": 1, "c": 1}
+    expected = {0: 5, 4: 5, 1: 1, 2: 1}
 
     for node, value in expected.items():
-        assert graph.nodes[node]["boundary_perim"] == value
-
-
-def edge_set_equal(set1, set2):
-    return {(y, x) for x, y in set1} | set1 == {(y, x) for x, y in set2} | set2
+        assert graph[node]["boundary_perim"] == value
 
 
 def test_from_file_adds_all_data_by_default(shapefile):
     graph = Graph.from_file(shapefile)
 
-    assert all("data" in node_data for node_data in graph.nodes.values())
-    assert all("data2" in node_data for node_data in graph.nodes.values())
+    assert all("data" in node_data for node, node_data in graph.nodes())
+    assert all("data2" in node_data for node, node_data in graph.nodes())
 
 
 def test_from_file_and_then_to_json_does_not_error(shapefile, target_file):
     graph = Graph.from_file(shapefile)
 
     # Even the geometry column is copied to the graph
-    assert all("geometry" in node_data for node_data in graph.nodes.values())
+    assert all("geometry" in node_data for node, node_data in graph.nodes())
 
     graph.to_json(target_file)
 
@@ -205,17 +207,20 @@ def test_from_file_and_then_to_json_with_geometries(shapefile, target_file):
     graph = Graph.from_file(shapefile)
 
     # Even the geometry column is copied to the graph
-    assert all("geometry" in node_data for node_data in graph.nodes.values())
+    assert all("geometry" in node_data for node, node_data in graph.nodes())
 
     graph.to_json(target_file, include_geometries_as_geojson=True)
 
 
-def test_graph_warns_for_islands():
+def test_graph_warns_for_disconnected_components():
     graph = Graph()
     graph.add_node(0)
+    graph.add_node(1)
+    graph.add_node(2)
+    graph.add_edge(0, 1, {})
 
     with pytest.warns(Warning):
-        graph.warn_for_islands()
+        graph.warn_for_disconnected_components()
 
 
 def test_graph_raises_if_crs_is_missing_when_reprojecting(geodataframe):
@@ -240,19 +245,40 @@ def test_can_ignore_errors_while_making_graph(shapefile):
 
 def test_data_and_geometry(gdf_with_data):
     df = gdf_with_data
-    graph = Graph.from_geodataframe(df, cols_to_add=["data","data2"])
-    assert graph.geometry is df.geometry
-    #graph.add_data(df[["data"]])
+    graph = Graph.from_geodataframe(df, cols_to_add=["data", "data2"])
+    for i in range(4):
+        assert graph.geometry[i] == df.loc[i, "geometry"]
     assert (graph.data["data"] == df["data"]).all()
-    #graph.add_data(df[["data2"]])
     assert list(graph.data.columns) == ["data", "data2"]
 
 
 def test_make_graph_from_dataframe_has_crs(gdf_with_data):
     graph = Graph.from_geodataframe(gdf_with_data)
-    assert CRS.from_json(graph.graph["crs"]).equals(gdf_with_data.crs)
+    assert CRS.from_json(graph.attrs["crs"]).equals(gdf_with_data.crs)
+
 
 def test_make_graph_from_shapefile_has_crs(shapefile):
     graph = Graph.from_file(shapefile)
     df = gp.read_file(shapefile)
-    assert CRS.from_json(graph.graph["crs"]).equals(df.crs)
+    assert CRS.from_json(graph.attrs["crs"]).equals(df.crs)
+
+
+def test_left_and_right_index_correct(gdf_with_data):
+    df = gdf_with_data
+    new_df = pandas.DataFrame()
+    new_df["MOCKGEOID"] = [
+        "895499",
+        "156851",
+        "564816",
+        "166481",
+    ]
+    # geodataframe["MOCKGEOID"] = ["166481", "156851", "895499", "564816"]
+    new_df["New_Data"] = [2, 1, 3, 0]
+    graph = Graph.from_geodataframe(df)
+    graph.join(
+        new_df, columns=["New_Data"], left_index="MOCKGEOID", right_index="MOCKGEOID"
+    )
+    assert graph[0]["New_Data"] == 0
+    assert graph[1]["New_Data"] == 1
+    assert graph[2]["New_Data"] == 2
+    assert graph[3]["New_Data"] == 3

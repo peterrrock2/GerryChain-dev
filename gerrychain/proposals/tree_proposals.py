@@ -186,7 +186,7 @@ def reversible_recom(
     def dist_pair_edges(part, a, b):
         return set(
             e
-            for e in part.graph.edges
+            for e in part.graph.edge_list()
             if (
                 (
                     part.assignment.mapping[e[0]] == a
