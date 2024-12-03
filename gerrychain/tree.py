@@ -264,7 +264,7 @@ def find_balanced_edge_cuts_contraction(
     :rtype: List[Cut]
     """
 
-    root = choice([x for x in h if h.degree(x) > 1])
+    root = choice([x for x in h if h.degree(x) >= 1])
     # BFS predecessors for iteratively contracting leaves
     pred = predecessors(h.graph, root)
 
@@ -377,7 +377,7 @@ def find_balanced_edge_cuts_memoization(
     :rtype: List[Cut]
     """
 
-    root = choice([x for x in h if h.degree(x) > 1])
+    root = choice([x for x in h if h.degree(x) >= 1])
     pred = predecessors(h.graph, root)
     succ = successors(h.graph, root)
     total_pop = h.tot_pop
