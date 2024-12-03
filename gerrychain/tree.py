@@ -87,6 +87,9 @@ def random_spanning_tree(
                 weight += value
 
         graph.edges[edge]["random_weight"] = weight
+        graph.edges[edge]["random_weight"] += graph.edges[edge].get(
+            "custom_surcharge", 0
+        )
 
     spanning_tree = tree.minimum_spanning_tree(
         graph, algorithm="kruskal", weight="random_weight"
