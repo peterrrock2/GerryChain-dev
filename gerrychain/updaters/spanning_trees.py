@@ -34,7 +34,4 @@ def num_spanning_trees(partition) -> Dict[int, int]:
     :returns: The number of spanning trees in each part (district) of a partition.
     :rtype: Dict[int, int]
     """
-    return {
-        part: _num_spanning_trees_in_district(partition, part)
-        for part in partition.parts
-    }
+    return {part: _num_spanning_trees_in_district(partition, part) for part in partition.parts}

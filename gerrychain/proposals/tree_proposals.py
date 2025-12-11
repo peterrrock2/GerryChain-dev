@@ -125,9 +125,7 @@ def recom(
                     break
 
             # frm: Note that the vertical bar operator merges the two sets into one set.
-            subgraph_nodes = (
-                partition.parts[parts_to_merge[0]] | partition.parts[parts_to_merge[1]]
-            )
+            subgraph_nodes = partition.parts[parts_to_merge[0]] | partition.parts[parts_to_merge[1]]
 
             flips = epsilon_tree_bipartition(
                 partition.graph.subgraph(subgraph_nodes),
@@ -206,14 +204,8 @@ def reversible_recom(
             e
             for e in part.graph.edges
             if (
-                (
-                    part.assignment.mapping[e[0]] == a
-                    and part.assignment.mapping[e[1]] == b
-                )
-                or (
-                    part.assignment.mapping[e[0]] == b
-                    and part.assignment.mapping[e[1]] == a
-                )
+                (part.assignment.mapping[e[0]] == a and part.assignment.mapping[e[1]] == b)
+                or (part.assignment.mapping[e[0]] == b and part.assignment.mapping[e[1]] == a)
             )
         )
 
@@ -292,9 +284,7 @@ def reversible_recom(
         partition.assignment.mapping[edge[1]],
     )
     # Remember node_ids from which subgraph was created - we will need them below
-    subgraph_nodes = (
-        partition.parts[parts_to_merge[0]] | partition.parts[parts_to_merge[1]]
-    )
+    subgraph_nodes = partition.parts[parts_to_merge[0]] | partition.parts[parts_to_merge[1]]
 
     # frm: Note: This code has changed to make sure we don't access subgraph node_ids.
     #               The former code saved the subgraph and used its nodes to compute
@@ -395,9 +385,7 @@ class ReCom:
         self.method = method
 
     def __call__(self, partition: Partition):
-        return recom(
-            partition, self.pop_col, self.ideal_pop, self.epsilon, method=self.method
-        )
+        return recom(partition, self.pop_col, self.ideal_pop, self.epsilon, method=self.method)
 
 
 class ReversibilityError(Exception):

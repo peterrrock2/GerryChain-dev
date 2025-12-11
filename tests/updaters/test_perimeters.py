@@ -128,9 +128,7 @@ def test_perimeter_match_naive_perimeter_at_every_step():
         return exterior
 
     def get_interior_boundaries(partition):
-        cut_edges = {
-            edge for edge in partition.graph.edges if partition.crosses_parts(edge)
-        }
+        cut_edges = {edge for edge in partition.graph.edges if partition.crosses_parts(edge)}
         interior = defaultdict(int)
         for edge in cut_edges:
             for node in edge:
@@ -143,8 +141,7 @@ def test_perimeter_match_naive_perimeter_at_every_step():
         interior_boundaries = get_interior_boundaries(partition)
         exterior_boundaries = get_exterior_boundaries(partition)
         expected = {
-            part: interior_boundaries[part] + exterior_boundaries[part]
-            for part in partition.parts
+            part: interior_boundaries[part] + exterior_boundaries[part] for part in partition.parts
         }
         return expected
 

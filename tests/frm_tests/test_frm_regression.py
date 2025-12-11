@@ -37,9 +37,7 @@ initial_partition = Partition(graph, assignment="district", updaters=my_updaters
 # This should be 8 since each district has 1 person in it.
 # Note that the key "population" corresponds to the population updater
 # that we defined above and not with the population column in the json file.
-ideal_population = sum(initial_partition["population"].values()) / len(
-    initial_partition
-)
+ideal_population = sum(initial_partition["population"].values()) / len(initial_partition)
 
 proposal = partial(
     recom, pop_col="TOTPOP", pop_target=ideal_population, epsilon=0.01, node_repeats=2

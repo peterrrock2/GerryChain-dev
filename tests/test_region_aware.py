@@ -1,10 +1,9 @@
-import pytest
 import random
-
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-from gerrychain.tree import BipartitionWarning
+import pytest
+
 from gerrychain import (
     Graph,
     MarkovChain,
@@ -13,15 +12,14 @@ from gerrychain import (
     constraints,
     proposals,
     tree,
-    updaters as gc_updaters,
 )
+from gerrychain import updaters as gc_updaters
+from gerrychain.tree import BipartitionWarning
 
 random.seed(2018)
 
 
-def run_chain_single(
-    seed, category, steps, surcharge, max_attempts=100000, reselect=False
-):
+def run_chain_single(seed, category, steps, surcharge, max_attempts=100000, reselect=False):
     import random
     from functools import partial
 
@@ -95,9 +93,7 @@ def test_region_aware_muni_errors():
 
     with pytest.raises(RuntimeError) as exec_info:
         # Random seed 0 should fail here
-        run_chain_single(
-            seed=0, category=region, steps=10000, max_attempts=1, surcharge=2.0
-        )
+        run_chain_single(seed=0, category=region, steps=10000, max_attempts=1, surcharge=2.0)
 
     random.seed(2018)
     assert "Could not find a possible cut after 1 attempts" in str(exec_info.value)
@@ -161,9 +157,7 @@ def straddled_regions(partition, reg_attr, all_reg_names):
     return sum(1 for value in split.values() if value > 0)
 
 
-def run_chain_dual(
-    seed, steps, surcharges={"muni": 0.5, "county": 0.5}, warn_attempts=1000
-):
+def run_chain_dual(seed, steps, surcharges={"muni": 0.5, "county": 0.5}, warn_attempts=1000):
     import random
     from functools import partial
 

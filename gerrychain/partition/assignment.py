@@ -21,9 +21,7 @@ class Assignment(Mapping):
 
     __slots__ = ["parts", "mapping"]
 
-    def __init__(
-        self, parts: Dict, mapping: Optional[Dict] = None, validate: bool = True
-    ) -> None:
+    def __init__(self, parts: Dict, mapping: Optional[Dict] = None, validate: bool = True) -> None:
         """
         :param parts: Dictionary mapping partition assignments frozensets of nodes.
         :type parts: Dict
@@ -129,9 +127,7 @@ class Assignment(Mapping):
         :returns: The assignment as a :class:`pandas.Series`.
         :rtype: pandas.Series
         """
-        groups = [
-            pandas.Series(data=part, index=nodes) for part, nodes in self.parts.items()
-        ]
+        groups = [pandas.Series(data=part, index=nodes) for part, nodes in self.parts.items()]
         return pandas.concat(groups)
 
     def to_dict(self) -> Dict:

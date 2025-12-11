@@ -61,9 +61,7 @@ class DataTally:
                 graph = partition.graph
                 node_ids = partition.graph.node_indices
                 attribute = self.data
-                self.data = {
-                    node_id: graph.node_data(node_id)[attribute] for node_id in node_ids
-                }
+                self.data = {node_id: graph.node_data(node_id)[attribute] for node_id in node_ids}
 
             tally = collections.defaultdict(int)
             for node_id, part in partition.assignment.items():

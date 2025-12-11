@@ -106,9 +106,7 @@ def on_flow(initializer: Callable, alias: str) -> Callable:
             new_values = previous.copy()
 
             for part, flow in partition.flows.items():
-                new_values[part] = function(
-                    partition, previous[part], flow["in"], flow["out"]
-                )
+                new_values[part] = function(partition, previous[part], flow["in"], flow["out"])
 
             return new_values
 

@@ -27,9 +27,7 @@ def test_all_cut_edge_flips(partition):
     #    )
     #
     result = set(
-        (node, part)
-        for flip in all_cut_edge_flips(partition)
-        for node, part in flip.items()
+        (node, part) for flip in all_cut_edge_flips(partition) for node, part in flip.items()
     )
 
     # Convert from internal node_ids to "original" node_ids

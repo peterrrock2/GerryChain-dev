@@ -31,9 +31,7 @@ from .bounds import SelfConfiguringLowerBound
 #
 
 
-def _are_reachable(
-    graph: Graph, start_node: Any, avoid: Callable, targets: Any
-) -> bool:
+def _are_reachable(graph: Graph, start_node: Any, avoid: Callable, targets: Any) -> bool:
     """
     A modified version of NetworkX's function
     `networkx.algorithms.shortest_paths.weighted._dijkstra_multisource()`
@@ -189,9 +187,7 @@ def single_flip_contiguous(partition: Partition) -> bool:
         # Check if all old neighbors in the same assignment are still reachable.
         # The "_partition_edge_avoid" function will prevent searching across
         # a part (district) boundary
-        connected = _are_reachable(
-            graph, start_neighbor, _partition_edge_avoid, old_neighbors
-        )
+        connected = _are_reachable(graph, start_neighbor, _partition_edge_avoid, old_neighbors)
 
         if not connected:
             return False
@@ -240,10 +236,7 @@ def contiguous(partition: Partition) -> bool:
     :rtype: bool
     """
 
-    return all(
-        is_connected_bfs(partition.subgraphs[part])
-        for part in _affected_parts(partition)
-    )
+    return all(is_connected_bfs(partition.subgraphs[part]) for part in _affected_parts(partition))
 
 
 def contiguous_bfs(partition: Partition) -> bool:

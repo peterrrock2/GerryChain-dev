@@ -107,9 +107,7 @@ def do_test_bipartition_tree_random_returns_a_subset_of_nodes(graph):
     assert all(node in graph.nodes for node in result)
 
 
-def test_bipartition_tree_random_returns_a_subset_of_nodes(
-    graph_with_pop_nx, graph_with_pop_rx
-):
+def test_bipartition_tree_random_returns_a_subset_of_nodes(graph_with_pop_nx, graph_with_pop_rx):
     # Test both NX-based and RX-based Graph objects
     do_test_bipartition_tree_random_returns_a_subset_of_nodes(graph_with_pop_nx)
     do_test_bipartition_tree_random_returns_a_subset_of_nodes(graph_with_pop_rx)
@@ -131,12 +129,8 @@ def test_bipartition_tree_random_returns_within_epsilon_of_target_pop(
     graph_with_pop_nx, graph_with_pop_rx
 ):
     # Test both NX-based and RX-based Graph objects
-    do_test_bipartition_tree_random_returns_within_epsilon_of_target_pop(
-        graph_with_pop_nx
-    )
-    do_test_bipartition_tree_random_returns_within_epsilon_of_target_pop(
-        graph_with_pop_rx
-    )
+    do_test_bipartition_tree_random_returns_within_epsilon_of_target_pop(graph_with_pop_nx)
+    do_test_bipartition_tree_random_returns_within_epsilon_of_target_pop(graph_with_pop_rx)
 
 
 # ---------------------------------------------------------------------
@@ -149,9 +143,7 @@ def do_test_bipartition_tree_returns_a_subset_of_nodes(graph):
     assert all(node in graph.nodes for node in result)
 
 
-def test_bipartition_tree_returns_a_subset_of_nodes(
-    graph_with_pop_nx, graph_with_pop_rx
-):
+def test_bipartition_tree_returns_a_subset_of_nodes(graph_with_pop_nx, graph_with_pop_rx):
     # Test both NX-based and RX-based Graph objects
     do_test_bipartition_tree_returns_a_subset_of_nodes(graph_with_pop_nx)
     do_test_bipartition_tree_returns_a_subset_of_nodes(graph_with_pop_rx)
@@ -198,12 +190,9 @@ def do_test_recursive_tree_part_returns_within_epsilon_of_target_pop(
         "pop",
         epsilon,
     )
-    partition = Partition(
-        twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")}
-    )
+    partition = Partition(twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")})
     assert all(
-        abs(part_pop - ideal_pop) / ideal_pop < epsilon
-        for part_pop in partition["pop"].values()
+        abs(part_pop - ideal_pop) / ideal_pop < epsilon for part_pop in partition["pop"].values()
     )
 
 
@@ -211,12 +200,8 @@ def test_recursive_tree_part_returns_within_epsilon_of_target_pop(
     twelve_by_twelve_with_pop_nx, twelve_by_twelve_with_pop_rx
 ):
     # Test both NX-based and RX-based Graph objects
-    do_test_recursive_tree_part_returns_within_epsilon_of_target_pop(
-        twelve_by_twelve_with_pop_nx
-    )
-    do_test_recursive_tree_part_returns_within_epsilon_of_target_pop(
-        twelve_by_twelve_with_pop_rx
-    )
+    do_test_recursive_tree_part_returns_within_epsilon_of_target_pop(twelve_by_twelve_with_pop_nx)
+    do_test_recursive_tree_part_returns_within_epsilon_of_target_pop(twelve_by_twelve_with_pop_rx)
 
 
 # ---------------------------------------------------------------------
@@ -245,12 +230,9 @@ def do_test_recursive_tree_part_returns_within_epsilon_of_target_pop_using_contr
             balance_edge_fn=find_balanced_edge_cuts_contraction,
         ),
     )
-    partition = Partition(
-        twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")}
-    )
+    partition = Partition(twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")})
     assert all(
-        abs(part_pop - ideal_pop) / ideal_pop < epsilon
-        for part_pop in partition["pop"].values()
+        abs(part_pop - ideal_pop) / ideal_pop < epsilon for part_pop in partition["pop"].values()
     )
 
 
@@ -289,12 +271,9 @@ def do_test_recursive_seed_part_returns_within_epsilon_of_target_pop(
         n=5,
         ceil=None,
     )
-    partition = Partition(
-        twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")}
-    )
+    partition = Partition(twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")})
     assert all(
-        abs(part_pop - ideal_pop) / ideal_pop < epsilon
-        for part_pop in partition["pop"].values()
+        abs(part_pop - ideal_pop) / ideal_pop < epsilon for part_pop in partition["pop"].values()
     )
 
 
@@ -302,12 +281,8 @@ def test_recursive_seed_part_returns_within_epsilon_of_target_pop(
     twelve_by_twelve_with_pop_nx, twelve_by_twelve_with_pop_rx
 ):
     # Test both NX-based and RX-based Graph objects
-    do_test_recursive_seed_part_returns_within_epsilon_of_target_pop(
-        twelve_by_twelve_with_pop_nx
-    )
-    do_test_recursive_seed_part_returns_within_epsilon_of_target_pop(
-        twelve_by_twelve_with_pop_rx
-    )
+    do_test_recursive_seed_part_returns_within_epsilon_of_target_pop(twelve_by_twelve_with_pop_nx)
+    do_test_recursive_seed_part_returns_within_epsilon_of_target_pop(twelve_by_twelve_with_pop_rx)
 
 
 # ---------------------------------------------------------------------
@@ -338,12 +313,9 @@ def do_test_recursive_seed_part_returns_within_epsilon_of_target_pop_using_contr
             balance_edge_fn=find_balanced_edge_cuts_contraction,
         ),
     )
-    partition = Partition(
-        twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")}
-    )
+    partition = Partition(twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")})
     assert all(
-        abs(part_pop - ideal_pop) / ideal_pop < epsilon
-        for part_pop in partition["pop"].values()
+        abs(part_pop - ideal_pop) / ideal_pop < epsilon for part_pop in partition["pop"].values()
     )
 
 
@@ -433,12 +405,9 @@ def do_test_recursive_seed_part_with_n_unspecified_within_epsilon(
         epsilon,
         ceil=None,
     )
-    partition = Partition(
-        twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")}
-    )
+    partition = Partition(twelve_by_twelve_with_pop_graph, result, updaters={"pop": Tally("pop")})
     assert all(
-        abs(part_pop - ideal_pop) / ideal_pop < epsilon
-        for part_pop in partition["pop"].values()
+        abs(part_pop - ideal_pop) / ideal_pop < epsilon for part_pop in partition["pop"].values()
     )
 
 
@@ -446,12 +415,8 @@ def test_recursive_seed_part_with_n_unspecified_within_epsilon(
     twelve_by_twelve_with_pop_nx, twelve_by_twelve_with_pop_rx
 ):
     # Test both NX-based and RX-based Graph objects
-    do_test_recursive_seed_part_with_n_unspecified_within_epsilon(
-        twelve_by_twelve_with_pop_nx
-    )
-    do_test_recursive_seed_part_with_n_unspecified_within_epsilon(
-        twelve_by_twelve_with_pop_rx
-    )
+    do_test_recursive_seed_part_with_n_unspecified_within_epsilon(twelve_by_twelve_with_pop_nx)
+    do_test_recursive_seed_part_with_n_unspecified_within_epsilon(twelve_by_twelve_with_pop_rx)
 
 
 # ---------------------------------------------------------------------
@@ -462,9 +427,7 @@ def do_test_random_spanning_tree_returns_tree_with_pop_attribute(graph):
     assert tree.is_a_tree()
 
 
-def test_random_spanning_tree_returns_tree_with_pop_attribute(
-    graph_with_pop_nx, graph_with_pop_rx
-):
+def test_random_spanning_tree_returns_tree_with_pop_attribute(graph_with_pop_nx, graph_with_pop_rx):
     # Test both NX-based and RX-based Graph objects
     do_test_random_spanning_tree_returns_tree_with_pop_attribute(graph_with_pop_nx)
     do_test_random_spanning_tree_returns_tree_with_pop_attribute(graph_with_pop_rx)
@@ -492,9 +455,7 @@ def test_uniform_spanning_tree_returns_tree_with_pop_attribute(
 def do_test_bipartition_tree_returns_a_tree(graph, spanning_tree):
     ideal_pop = sum(graph.node_data(node)["pop"] for node in graph) / 2
 
-    result = bipartition_tree(
-        graph, "pop", ideal_pop, 0.25, 10, spanning_tree, lambda x: 4
-    )
+    result = bipartition_tree(graph, "pop", ideal_pop, 0.25, 10, spanning_tree, lambda x: 4)
 
     assert spanning_tree.subgraph(result).is_a_tree()
     assert spanning_tree.subgraph(
@@ -673,9 +634,7 @@ def test_find_balanced_cuts_contraction():
     # |
     # 8
 
-    populated_tree = PopulatedGraph(
-        tree, {node: 1 for node in tree}, len(tree) / 2, 0.5
-    )
+    populated_tree = PopulatedGraph(tree, {node: 1 for node in tree}, len(tree) / 2, 0.5)
     cuts = find_balanced_edge_cuts_contraction(populated_tree)
     edges = set(tuple(sorted(cut.edge)) for cut in cuts)
     assert edges == {(1, 4), (3, 4), (3, 6)}
@@ -691,9 +650,7 @@ def test_no_balanced_cuts_contraction_when_one_side_okay():
     #
     nx_to_rx_node_id_map = {node: node for node in range(5)}
 
-    tree_nx, tree_rx = create_graphs_from_nx_edges(
-        5, list_of_nodes_nx, nx_to_rx_node_id_map
-    )
+    tree_nx, tree_rx = create_graphs_from_nx_edges(5, list_of_nodes_nx, nx_to_rx_node_id_map)
 
     # OK to use the same populations for NX and RX graphs
     populations = {0: 4, 1: 4, 2: 3, 3: 3, 4: 3}
@@ -705,14 +662,10 @@ def test_no_balanced_cuts_contraction_when_one_side_okay():
         graph=tree_rx, populations=populations, ideal_pop=10, epsilon=0.1
     )
 
-    cuts_nx = find_balanced_edge_cuts_contraction(
-        populated_tree_nx, one_sided_cut=False
-    )
+    cuts_nx = find_balanced_edge_cuts_contraction(populated_tree_nx, one_sided_cut=False)
     assert cuts_nx == []
 
-    cuts_rx = find_balanced_edge_cuts_contraction(
-        populated_tree_rx, one_sided_cut=False
-    )
+    cuts_rx = find_balanced_edge_cuts_contraction(populated_tree_rx, one_sided_cut=False)
     assert cuts_rx == []
 
 
@@ -726,9 +679,7 @@ def test_find_balanced_cuts_memo():
     #
     nx_to_rx_node_id_map = {node: node for node in range(9)}
 
-    tree_nx, tree_rx = create_graphs_from_nx_edges(
-        9, list_of_nodes_nx, nx_to_rx_node_id_map
-    )
+    tree_nx, tree_rx = create_graphs_from_nx_edges(9, list_of_nodes_nx, nx_to_rx_node_id_map)
 
     # 0 - 1 - 2
     #     |
@@ -764,9 +715,7 @@ def test_no_balanced_cuts_memo_when_one_side_okay():
     #
     nx_to_rx_node_id_map = {node: node for node in range(5)}
 
-    tree_nx, tree_rx = create_graphs_from_nx_edges(
-        5, list_of_nodes_nx, nx_to_rx_node_id_map
-    )
+    tree_nx, tree_rx = create_graphs_from_nx_edges(5, list_of_nodes_nx, nx_to_rx_node_id_map)
 
     # OK to use the same populations with both NX and RX Graphs
     populations = {0: 4, 1: 4, 2: 3, 3: 3, 4: 3}

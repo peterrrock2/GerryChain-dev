@@ -26,9 +26,7 @@ def main():
     # This should be 8 since each district has 1 person in it.
     # Note that the key "population" corresponds to the population updater
     # that we defined above and not with the population column in the json file.
-    ideal_population = sum(initial_partition["population"].values()) / len(
-        initial_partition
-    )
+    ideal_population = sum(initial_partition["population"].values()) / len(initial_partition)
 
     proposal = partial(
         recom,

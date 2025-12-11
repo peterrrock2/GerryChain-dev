@@ -33,9 +33,7 @@ class SingleMetricOptimizer:
     def __init__(
         self,
         proposal: Callable[[Partition], Partition],
-        constraints: Union[
-            Callable[[Partition], bool], List[Callable[[Partition], bool]]
-        ],
+        constraints: Union[Callable[[Partition], bool], List[Callable[[Partition], bool]]],
         initial_state: Partition,
         optimization_metric: Callable[[Partition], Any],
         maximize: bool = True,
@@ -241,11 +239,7 @@ class SingleMetricOptimizer:
             elif time_in_cycle < cycle_length - duration_cooldown:
                 return 1
             else:
-                return (
-                    1
-                    - (time_in_cycle - cycle_length + duration_cooldown)
-                    / duration_cooldown
-                )
+                return 1 - (time_in_cycle - cycle_length + duration_cooldown) / duration_cooldown
 
         return beta_function
 
@@ -323,8 +317,7 @@ class SingleMetricOptimizer:
                 return 1
             else:
                 value = 1 - logit(
-                    (time_in_cycle - cycle_length + duration_cooldown)
-                    / duration_cooldown
+                    (time_in_cycle - cycle_length + duration_cooldown) / duration_cooldown
                 )
                 if value < 0:
                     return 0
@@ -404,9 +397,7 @@ class SingleMetricOptimizer:
         """
         if with_progress_bar:
             for part in tqdm(
-                self.short_bursts(
-                    burst_length, num_bursts, accept, with_progress_bar=False
-                ),
+                self.short_bursts(burst_length, num_bursts, accept, with_progress_bar=False),
                 total=burst_length * num_bursts,
             ):
                 yield part
@@ -457,9 +448,7 @@ class SingleMetricOptimizer:
         chain = MarkovChain(
             self._proposal,
             self._constraints,
-            self._simulated_annealing_acceptance_function(
-                beta_function, beta_magnitude
-            ),
+            self._simulated_annealing_acceptance_function(beta_function, beta_magnitude),
             self._initial_part,
             num_steps,
         )

@@ -49,9 +49,7 @@ def initialize_exterior_boundaries_as_a_set(partition) -> Dict[int, Set]:
 
 
 @on_flow(initialize_exterior_boundaries_as_a_set, alias="exterior_boundaries_as_a_set")
-def exterior_boundaries_as_a_set(
-    partition, previous: Set, inflow: Set, outflow: Set
-) -> Set:
+def exterior_boundaries_as_a_set(partition, previous: Set, inflow: Set, outflow: Set) -> Set:
     """
     Updater function that responds to the flow of nodes between different partitions.
 
@@ -125,12 +123,10 @@ def exterior_boundaries(partition, previous: Set, inflow: Set, outflow: Set) -> 
     """
     graph_boundary = partition["boundary_nodes"]
     added_perimeter = sum(
-        partition.graph.node_data(node)["boundary_perim"]
-        for node in inflow & graph_boundary
+        partition.graph.node_data(node)["boundary_perim"] for node in inflow & graph_boundary
     )
     removed_perimeter = sum(
-        partition.graph.node_data(node)["boundary_perim"]
-        for node in outflow & graph_boundary
+        partition.graph.node_data(node)["boundary_perim"] for node in outflow & graph_boundary
     )
     return previous + added_perimeter - removed_perimeter
 
@@ -174,9 +170,7 @@ def initialize_interior_boundaries(partition):
 
 
 @on_edge_flow(initialize_interior_boundaries, alias="interior_boundaries")
-def interior_boundaries(
-    partition, previous: Set, new_edges: Set, old_edges: Set
-) -> Dict:
+def interior_boundaries(partition, previous: Set, new_edges: Set, old_edges: Set) -> Dict:
     """
     Updater function that responds to the flow of nodes between different partitions.
 
@@ -199,15 +193,11 @@ def interior_boundaries(
     """
 
     added_perimeter = sum(
-        partition.graph.edge_data(partition.graph.get_edge_id_from_edge(edge))[
-            "shared_perim"
-        ]
+        partition.graph.edge_data(partition.graph.get_edge_id_from_edge(edge))["shared_perim"]
         for edge in new_edges
     )
     removed_perimeter = sum(
-        partition.graph.edge_data(partition.graph.get_edge_id_from_edge(edge))[
-            "shared_perim"
-        ]
+        partition.graph.edge_data(partition.graph.get_edge_id_from_edge(edge))["shared_perim"]
         for edge in old_edges
     )
     return previous + added_perimeter - removed_perimeter

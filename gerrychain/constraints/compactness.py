@@ -57,13 +57,9 @@ def L_minus_1_polsby_popper(partition):
     :returns: :math:`L^{-1}` norm of the Polsby-Popper scores
     :rtype: float
     """
-    return len(partition.parts) / sum(
-        1 / value for value in partition["polsby_popper"].values()
-    )
+    return len(partition.parts) / sum(1 / value for value in partition["polsby_popper"].values())
 
 
 no_worse_L_minus_1_polsby_popper = SelfConfiguringLowerBound(L_minus_1_polsby_popper)
 
-no_worse_L1_reciprocal_polsby_popper = SelfConfiguringUpperBound(
-    L1_reciprocal_polsby_popper
-)
+no_worse_L1_reciprocal_polsby_popper = SelfConfiguringUpperBound(L1_reciprocal_polsby_popper)

@@ -85,9 +85,7 @@ def reprojected(df):
     """
     utm = identify_utm_zone(df)
     return df.to_crs(
-        "+proj=utm +zone={utm} +ellps=WGS84 +datum=WGS84 +units=m +no_defs".format(
-            utm=utm
-        )
+        "+proj=utm +zone={utm} +ellps=WGS84 +datum=WGS84 +units=m +no_defs".format(utm=utm)
     )
 
 

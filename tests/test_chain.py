@@ -23,9 +23,7 @@ def mock_is_valid(state):
 def test_MarkovChain_runs_only_total_steps_times():
     for total_steps in range(1, 11):
         initial = MockState()
-        chain = MarkovChain(
-            mock_proposal, mock_is_valid, mock_accept, initial, total_steps
-        )
+        chain = MarkovChain(mock_proposal, mock_is_valid, mock_accept, initial, total_steps)
         counter = 0
         for state in chain:
             assert isinstance(state, MockState)
@@ -38,9 +36,7 @@ def test_MarkovChain_runs_only_total_steps_times():
 
 def test_MarkovChain_returns_the_initial_state_first():
     initial = MagicMock()
-    chain = MarkovChain(
-        mock_proposal, mock_is_valid, mock_accept, initial, total_steps=10
-    )
+    chain = MarkovChain(mock_proposal, mock_is_valid, mock_accept, initial, total_steps=10)
 
     counter = 0
     for state in chain:

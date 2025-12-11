@@ -121,9 +121,7 @@ from .graph import Graph
 # of NetworkX Graph objects.
 
 
-def random_spanning_tree(
-    graph: Graph, region_surcharge: Optional[Dict] = None
-) -> Graph:
+def random_spanning_tree(graph: Graph, region_surcharge: Optional[Dict] = None) -> Graph:
     """
     Builds a spanning tree chosen by Kruskal's method using random weights.
 
@@ -409,9 +407,7 @@ class PopulatedGraph:
         self.tot_pop = sum(self.population.values())
         self.ideal_pop = ideal_pop
         self.epsilon = epsilon
-        self._degrees = {
-            node_id: graph.degree(node_id) for node_id in graph.node_indices
-        }
+        self._degrees = {node_id: graph.degree(node_id) for node_id in graph.node_indices}
 
         # frm: TODO: Refactor: _degrees ???  Why separately store the degree of every node?
         #
@@ -438,9 +434,7 @@ class PopulatedGraph:
         #     for node_id in graph.node_indices:
         #         ...do something with the node_id
         #
-        raise NotImplementedError(
-            "Graph is not iterable - use graph.node_indices instead"
-        )
+        raise NotImplementedError("Graph is not iterable - use graph.node_indices instead")
 
     def degree(self, node) -> int:
         return self._degrees[node]
@@ -486,10 +480,7 @@ class PopulatedGraph:
         # meaning...
 
         if one_sided_cut:
-            return (
-                abs(self.population[node] - self.ideal_pop)
-                < self.epsilon * self.ideal_pop
-            )
+            return abs(self.population[node] - self.ideal_pop) < self.epsilon * self.ideal_pop
 
         return (
             abs(self.population[node] - self.ideal_pop) <= self.epsilon * self.ideal_pop
@@ -517,9 +508,7 @@ Cut.__new__.__defaults__ = (None, None, None)
 Cut.__doc__ = "Represents a cut in a graph."
 Cut.edge.__doc__ = "The edge where the cut is made. Defaults to None."
 Cut.weight.__doc__ = "The weight assigned to the edge (if any). Defaults to None."
-Cut.subset.__doc__ = (
-    "The (frozen) subset of nodes on one side of the cut. Defaults to None."
-)
+Cut.subset.__doc__ = "The (frozen) subset of nodes on one side of the cut. Defaults to None."
 
 # frm: TODO:  Documentation:  Document what Cut objects are used for
 #
@@ -562,9 +551,7 @@ def find_balanced_edge_cuts_contraction(
     :rtype: List[Cut]
     """
 
-    root = choice(
-        [node_id for node_id in h.graph.node_indices if h.degree(node_id) > 1]
-    )
+    root = choice([node_id for node_id in h.graph.node_indices if h.degree(node_id) > 1])
     # BFS predecessors for iteratively contracting leaves
     pred = h.graph.predecessors(root)
 
@@ -585,9 +572,7 @@ def find_balanced_edge_cuts_contraction(
     #           that does something similar (perhaps exactly the same).
     #           Need to figure out why there are more than one way to do this...
 
-    leaves = deque(
-        node_id for node_id in h.graph.node_indices if h.degree(node_id) == 1
-    )
+    leaves = deque(node_id for node_id in h.graph.node_indices if h.degree(node_id) == 1)
     while len(leaves) > 0:
         leaf = leaves.popleft()
         if h.has_ideal_population(leaf, one_sided_cut=one_sided_cut):
@@ -780,9 +765,7 @@ def find_balanced_edge_cuts_memoization(
 
     # frm: ???:  Why does a root have to have degree > 1?  I would think that any node would do...
 
-    root = choice(
-        [node_id for node_id in h.graph.node_indices if h.degree(node_id) > 1]
-    )
+    root = choice([node_id for node_id in h.graph.node_indices if h.degree(node_id) > 1])
     pred = h.graph.predecessors(root)
     succ = h.graph.successors(root)
     total_pop = h.tot_pop
@@ -821,9 +804,7 @@ def find_balanced_edge_cuts_memoization(
                         weight=h.graph.edge_data(h.graph.get_edge_id_from_edge(e)).get(
                             "random_weight", wt
                         ),
-                        subset=frozenset(
-                            set(h.graph.node_indices) - _part_nodes(node, succ)
-                        ),
+                        subset=frozenset(set(h.graph.node_indices) - _part_nodes(node, succ)),
                     )
                 )
 
@@ -855,9 +836,7 @@ def find_balanced_edge_cuts_memoization(
                     weight=h.graph.edge_data(h.graph.get_edge_id_from_edge(e)).get(
                         "random_weight", wt
                     ),
-                    subset=frozenset(
-                        set(h.graph.node_indices) - _part_nodes(node, succ)
-                    ),
+                    subset=frozenset(set(h.graph.node_indices) - _part_nodes(node, succ)),
                 )
             )
     return cuts
@@ -935,15 +914,11 @@ def _max_weight_choice(cut_edge_list: List[Cut]) -> Cut:
 #                   don't yet know what it does or why...
 # Note that this is only ever used once...
 def _power_set_sorted_by_size_then_sum(d):
-    power_set = [
-        s for i in range(1, len(d) + 1) for s in itertools.combinations(d.keys(), i)
-    ]
+    power_set = [s for i in range(1, len(d) + 1) for s in itertools.combinations(d.keys(), i)]
 
     # Sort the subsets in descending order based on
     # the sum of their corresponding values in the dictionary
-    sorted_power_set = sorted(
-        power_set, key=lambda s: (len(s), sum(d[i] for i in s)), reverse=True
-    )
+    sorted_power_set = sorted(power_set, key=lambda s: (len(s), sum(d[i] for i in s)), reverse=True)
 
     return sorted_power_set
 
@@ -1267,10 +1242,8 @@ def bipartition_tree(
                 chosen_cut = cut_choice(h, region_surcharge, possible_cuts)
             else:
                 chosen_cut = cut_choice(possible_cuts)
-            translated_nodes = (
-                subgraph_to_split.translate_subgraph_node_ids_for_set_of_nodes(
-                    chosen_cut.subset
-                )
+            translated_nodes = subgraph_to_split.translate_subgraph_node_ids_for_set_of_nodes(
+                chosen_cut.subset
             )
             # print(f"bipartition_tree(): translated_nodes = {translated_nodes}")
             # frm: Not sure if it is important that the returned set be a frozenset...
@@ -1497,12 +1470,8 @@ def bipartition_tree_random_with_num_cuts(
     if possible_cuts:
         chosen_cut = choice(possible_cuts)
         num_cuts = len(possible_cuts)
-        parent_nodes = graph.translate_subgraph_node_ids_for_set_of_nodes(
-            chosen_cut.subset
-        )
-        return num_cuts, frozenset(
-            parent_nodes
-        )  # frm: Not sure if important that it be frozenset
+        parent_nodes = graph.translate_subgraph_node_ids_for_set_of_nodes(chosen_cut.subset)
+        return num_cuts, frozenset(parent_nodes)  # frm: Not sure if important that it be frozenset
     else:
         return None
 
@@ -1610,14 +1579,10 @@ def bipartition_tree_random(
     )
     if possible_cuts:
         chosen_cut = choice(possible_cuts)
-        translated_nodes = (
-            subgraph_to_split.translate_subgraph_node_ids_for_set_of_nodes(
-                chosen_cut.subset
-            )
+        translated_nodes = subgraph_to_split.translate_subgraph_node_ids_for_set_of_nodes(
+            chosen_cut.subset
         )
-        return frozenset(
-            translated_nodes
-        )  # frm: Not sure if important that it be frozenset
+        return frozenset(translated_nodes)  # frm: Not sure if important that it be frozenset
 
 
 # frm: used in this file and in tree_proposals.py
@@ -2279,9 +2244,7 @@ def _recursive_seed_part_inner(
 
     translated_assignment = []
     for set_of_nodes in assignment:
-        translated_set_of_nodes = graph.translate_subgraph_node_ids_for_set_of_nodes(
-            set_of_nodes
-        )
+        translated_set_of_nodes = graph.translate_subgraph_node_ids_for_set_of_nodes(set_of_nodes)
         translated_assignment.append(translated_set_of_nodes)
 
     return translated_assignment

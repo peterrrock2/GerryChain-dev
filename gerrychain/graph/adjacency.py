@@ -11,6 +11,7 @@ unspecified because of import issues.
 
 import warnings
 from typing import Dict
+
 from geopandas import GeoDataFrame
 
 
@@ -81,9 +82,7 @@ def intersections_with_neighbors(geometries):
     :rtype: Generator
     """
     for i, neighbors in neighboring_geometries(geometries):
-        intersections = {
-            j: geometries[i].intersection(geometries[j]) for j in neighbors
-        }
+        intersections = {j: geometries[i].intersection(geometries[j]) for j in neighbors}
         yield (i, intersections)
 
 
@@ -110,9 +109,7 @@ def warn_for_overlaps(intersection_pairs):
         yield (i, intersections)
     if len(overlaps) > 0:
         warnings.warn(
-            "Found overlaps among the given polygons. Indices of overlaps: {}".format(
-                overlaps
-            )
+            "Found overlaps among the given polygons. Indices of overlaps: {}".format(overlaps)
         )
 
 

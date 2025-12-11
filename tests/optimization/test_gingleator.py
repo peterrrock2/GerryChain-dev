@@ -46,8 +46,7 @@ def gingleator_test_partition(four_by_five_grid_for_opt):
             "population": Tally("population", alias="population"),
             "MVAP": Tally("MVAP", alias="MVAP"),
             "m_perc": lambda p_dict: {
-                key: p_dict["MVAP"][key] / p_dict["population"][key]
-                for key in p_dict["MVAP"]
+                key: p_dict["MVAP"][key] / p_dict["population"][key] for key in p_dict["MVAP"]
             },
             "my_cut_edges": simple_cut_edge_count,
         },
@@ -103,8 +102,7 @@ def test_ginglator_warns_if_min_perc_and_min_pop_col_set(four_by_five_grid_for_o
             "population": Tally("population", alias="population"),
             "MVAP": Tally("MVAP", alias="MVAP"),
             "m_perc": lambda p_dict: {
-                key: p_dict["MVAP"][key] / p_dict["population"][key]
-                for key in p_dict["MVAP"]
+                key: p_dict["MVAP"][key] / p_dict["population"][key] for key in p_dict["MVAP"]
             },
             "my_cut_edges": simple_cut_edge_count,
         },
@@ -205,20 +203,14 @@ def test_reward_next_highest_close(four_by_five_grid_for_opt):
     assert Gingleator.reward_next_highest_close(initial_partition, "m_perc", 0.5) == 2
     # Rounding needed here because of floating point arithmetic
     assert (
-        round(
-            Gingleator.reward_next_highest_close(initial_partition, "m_perc", 0.29), 5
-        )
-        == 2 + 0.1
+        round(Gingleator.reward_next_highest_close(initial_partition, "m_perc", 0.29), 5) == 2 + 0.1
     )
 
 
 def test_penalize_maximum_over(four_by_five_grid_for_opt):
     initial_partition = gingleator_test_partition(four_by_five_grid_for_opt)
 
-    assert (
-        Gingleator.penalize_maximum_over(initial_partition, "m_perc", 0.5)
-        == 2.0 + 0.48 / 0.50
-    )
+    assert Gingleator.penalize_maximum_over(initial_partition, "m_perc", 0.5) == 2.0 + 0.48 / 0.50
 
     assert Gingleator.penalize_maximum_over(initial_partition, "m_perc", 0.6) == 0
 
@@ -226,9 +218,6 @@ def test_penalize_maximum_over(four_by_five_grid_for_opt):
 def test_penalize_avg_over(four_by_five_grid_for_opt):
     initial_partition = gingleator_test_partition(four_by_five_grid_for_opt)
 
-    assert (
-        Gingleator.penalize_avg_over(initial_partition, "m_perc", 0.5)
-        == 2.0 + 0.48 / 0.50
-    )
+    assert Gingleator.penalize_avg_over(initial_partition, "m_perc", 0.5) == 2.0 + 0.48 / 0.50
 
     assert Gingleator.penalize_avg_over(initial_partition, "m_perc", 0.6) == 0

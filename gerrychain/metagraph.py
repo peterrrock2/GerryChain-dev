@@ -90,9 +90,7 @@ def all_valid_flips(
         yield state.flips
 
 
-def metagraph_degree(
-    partition: Partition, constraints: Union[Iterable[Callable], Callable]
-) -> int:
+def metagraph_degree(partition: Partition, constraints: Union[Iterable[Callable], Callable]) -> int:
     """
     Calculate the degree of the node in the metagraph of the given partition.
     That is to say, compute how many possible valid states are reachable from

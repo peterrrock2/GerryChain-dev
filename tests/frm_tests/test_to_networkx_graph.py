@@ -135,15 +135,11 @@ def test_to_networkx_graph_works():
     # convert the internal assignments into "original" node_ids
     original_assignment_0 = {}
     for node_id, part in internal_assignment_0.items():
-        original_nx_node_id = partition.graph.original_nx_node_id_for_internal_node_id(
-            node_id
-        )
+        original_nx_node_id = partition.graph.original_nx_node_id_for_internal_node_id(node_id)
         original_assignment_0[original_nx_node_id] = part
     original_assignment_1 = {}
     for node_id, part in internal_assignment_1.items():
-        original_nx_node_id = partition.graph.original_nx_node_id_for_internal_node_id(
-            node_id
-        )
+        original_nx_node_id = partition.graph.original_nx_node_id_for_internal_node_id(node_id)
         original_assignment_1[original_nx_node_id] = part
 
     # Check that all is well...
@@ -175,12 +171,9 @@ def test_to_networkx_graph_works():
     # Check edge data
     for edge in extracted_nx_graph.edges:
         assert (
-            extracted_nx_graph.edges[edge]["nx-edge-data"]
-            == nx_graph.edges[edge]["nx-edge-data"]
+            extracted_nx_graph.edges[edge]["nx-edge-data"] == nx_graph.edges[edge]["nx-edge-data"]
         )
         # Data assigned to the partition's RX-Graph should still be there...
-        assert (
-            extracted_nx_graph.edges[edge]["internal-edge-data"] == "internal-edge-data"
-        )
+        assert extracted_nx_graph.edges[edge]["internal-edge-data"] == "internal-edge-data"
     # compare the extracted_nx_graph's nodes and edges to see if they make sense
     # Compare node_data and edge_data

@@ -8,9 +8,7 @@ from ..partition import Partition
 
 
 # frm: only ever used in this file - but maybe it is used externally?
-def spectral_cut(
-    subgraph: Graph, part_labels: Dict, weight_type: str, lap_type: str
-) -> Dict:
+def spectral_cut(subgraph: Graph, part_labels: Dict, weight_type: str, lap_type: str) -> Dict:
     """
     Spectral cut function.
 
@@ -138,9 +136,7 @@ def spectral_recom(
         partition.assignment.mapping[cut_edge[1]],
     )
 
-    subgraph_nodes = (
-        partition.parts[parts_to_merge[0]] | partition.parts[parts_to_merge[1]]
-    )
+    subgraph_nodes = partition.parts[parts_to_merge[0]] | partition.parts[parts_to_merge[1]]
 
     # Cut the set of all nodes from parts_to_merge into two hopefully new parts (districts)
     flips = spectral_cut(

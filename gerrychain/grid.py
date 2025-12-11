@@ -124,9 +124,7 @@ class Grid(Partition):
 
         if dimensions:
             self.dimensions = dimensions
-            graph = Graph.from_networkx(
-                _create_grid_nx_graph(dimensions, with_diagonals)
-            )
+            graph = Graph.from_networkx(_create_grid_nx_graph(dimensions, with_diagonals))
 
             if not assignment:
                 thresholds = tuple(math.floor(n / 2) for n in self.dimensions)
@@ -208,12 +206,8 @@ def _create_grid_nx_graph(dimensions: Tuple[int, ...], with_diagonals: bool) -> 
     networkx.set_edge_attributes(nx_graph, 1, "shared_perim")
 
     if with_diagonals:
-        nw_to_se = [
-            ((i, j), (i + 1, j + 1)) for i in range(m - 1) for j in range(n - 1)
-        ]
-        sw_to_ne = [
-            ((i, j + 1), (i + 1, j)) for i in range(m - 1) for j in range(n - 1)
-        ]
+        nw_to_se = [((i, j), (i + 1, j + 1)) for i in range(m - 1) for j in range(n - 1)]
+        sw_to_ne = [((i, j + 1), (i + 1, j)) for i in range(m - 1) for j in range(n - 1)]
         diagonal_edges = nw_to_se + sw_to_ne
         # frm: TODO: Check that graph is an NX graph before calling graph.add_edges_from().
         #      Eventually make this work for RX too...
@@ -293,9 +287,7 @@ def _tag_boundary_nodes(nx_graph: networkx.Graph, dimensions: Tuple[int, int]) -
     for node in nx_graph.nodes:
         if node[0] in [0, m - 1] or node[1] in [0, n - 1]:
             nx_graph.nodes[node]["boundary_node"] = True
-            nx_graph.nodes[node]["boundary_perim"] = get_boundary_perim(
-                node, dimensions
-            )
+            nx_graph.nodes[node]["boundary_perim"] = get_boundary_perim(node, dimensions)
         else:
             nx_graph.nodes[node]["boundary_node"] = False
 

@@ -50,9 +50,7 @@ class Validator:
             elif is_valid is True:
                 pass
             else:
-                raise TypeError(
-                    "Constraint {} returned a non-boolean.".format(repr(constraint))
-                )
+                raise TypeError("Constraint {} returned a non-boolean.".format(repr(constraint)))
 
         # all constraints are satisfied
         return True
@@ -95,9 +93,7 @@ def within_percent_of_ideal_population(
     return Bounds(population, bounds=bounds)
 
 
-def deviation_from_ideal(
-    partition: Partition, attribute: str = "population"
-) -> Dict[int, float]:
+def deviation_from_ideal(partition: Partition, attribute: str = "population") -> Dict[int, float]:
     """
     Computes the deviation of the given ``attribute`` from exact equality
     among parts of the partition. Usually ``attribute`` is the population, and
@@ -119,9 +115,7 @@ def deviation_from_ideal(
     total = sum(partition[attribute].values())
     ideal = total / number_of_districts
 
-    return {
-        part: (value - ideal) / ideal for part, value in partition[attribute].items()
-    }
+    return {part: (value - ideal) / ideal for part, value in partition[attribute].items()}
 
 
 def districts_within_tolerance(

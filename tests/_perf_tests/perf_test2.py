@@ -44,9 +44,7 @@ def main():
     # The ReCom proposal needs to know the ideal population for the districts so that
     # we can improve speed by bailing early on unbalanced partitions.
 
-    ideal_population = sum(initial_partition["population"].values()) / len(
-        initial_partition
-    )
+    ideal_population = sum(initial_partition["population"].values()) / len(initial_partition)
 
     # We use functools.partial to bind the extra parameters (pop_col, pop_target, epsilon, node_repeats)
     # of the recom proposal.
@@ -65,9 +63,7 @@ def main():
         cut_edges_length, 2 * len(initial_partition["cut_edges"])
     )
 
-    pop_constraint = constraints.within_percent_of_ideal_population(
-        initial_partition, 0.02
-    )
+    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.02)
 
     print("About to call MarkovChain", file=sys.stderr)
 

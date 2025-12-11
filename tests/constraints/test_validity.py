@@ -76,8 +76,7 @@ def test_discontiguous_with_single_flip_contiguous_no_flips_is_false(
 
 
 @pytest.mark.xfail(
-    reason="single_flip_contiguous does not work"
-    "when the previous partition is discontiguous"
+    reason="single_flip_contiguous does not work" "when the previous partition is discontiguous"
 )
 def test_discontiguous_with_single_flip_contiguous_flips_is_false(
     discontiguous_partition_with_flips,
@@ -165,9 +164,7 @@ def test_no_vanishing_districts_works():
     partition = MagicMock()
     partition.parent = parent
     partition.assignment = parent.assignment.copy()
-    partition.assignment.update_flows(
-        {1: {"out": set(), "in": {2}}, 2: {"out": {2}, "in": set()}}
-    )
+    partition.assignment.update_flows({1: {"out": set(), "in": {2}}, 2: {"out": {2}, "in": set()}})
 
     assert not no_vanishing_districts(partition)
 

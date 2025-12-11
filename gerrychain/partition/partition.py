@@ -417,15 +417,11 @@ class Partition:
                 raise Exception("Partition.plot: graph has no geometry data")
 
         if set(geometries.index) != self.graph.node_indices:
-            raise TypeError(
-                "The provided geometries do not match the nodes of the graph."
-            )
+            raise TypeError("The provided geometries do not match the nodes of the graph.")
         assignment_series = self.assignment.to_series()
         if isinstance(geometries, geopandas.GeoDataFrame):
             geometries = geometries.geometry
-        df = geopandas.GeoDataFrame(
-            {"assignment": assignment_series}, geometry=geometries
-        )
+        df = geopandas.GeoDataFrame({"assignment": assignment_series}, geometry=geometries)
         return df.plot(column="assignment", **kwargs)
 
     @classmethod
@@ -463,9 +459,7 @@ class Partition:
         id_column_key = districtr_plan["idColumn"]["key"]
         districtr_assignment = districtr_plan["assignment"]
         try:
-            node_to_id = {
-                node: str(graph.node_data(node)[id_column_key]) for node in graph
-            }
+            node_to_id = {node: str(graph.node_data(node)[id_column_key]) for node in graph}
         except KeyError:
             raise TypeError(
                 "The provided graph is missing the {} column, which is "
@@ -475,8 +469,7 @@ class Partition:
         # frm: TODO: Testing: Verify that there is a test for from_districtr_file()
 
         assignment = {
-            node_id: districtr_assignment[node_to_id[node_id]]
-            for node_id in graph.node_indices
+            node_id: districtr_assignment[node_to_id[node_id]] for node_id in graph.node_indices
         }
 
         return cls(graph, assignment, updaters)

@@ -124,9 +124,7 @@ def test_make_graph_from_dataframe_gives_correct_graph(geodataframe):
     df = geodataframe.set_index("ID")
     graph = Graph.from_geodataframe(df)
 
-    assert edge_set_equal(
-        set(graph.edges), {("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")}
-    )
+    assert edge_set_equal(set(graph.edges), {("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")})
 
 
 def test_make_graph_works_with_queen_adjacency(geodataframe):

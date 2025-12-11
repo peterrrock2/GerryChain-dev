@@ -127,12 +127,8 @@ def top_level_graph_is_properly_configured(graph):
 
 def test_from_networkx(four_by_five_grid_nx):
     graph = Graph.from_networkx(four_by_five_grid_nx)
-    assert (
-        len(graph.node_indices) == 20
-    ), f"Expected 20 nodes but got {len(graph.node_indices)}"
-    assert (
-        len(graph.edge_indices) == 26
-    ), f"Expected 26 edges but got {len(graph.edge_indices)}"
+    assert len(graph.node_indices) == 20, f"Expected 20 nodes but got {len(graph.node_indices)}"
+    assert len(graph.edge_indices) == 26, f"Expected 26 edges but got {len(graph.edge_indices)}"
     assert (
         graph.node_data(1)["population"] == 10
     ), f"Expected population of 10 but got {graph.node_data(1)['population']}"
@@ -142,9 +138,7 @@ def test_from_networkx(four_by_five_grid_nx):
 def test_from_rustworkx(four_by_five_grid_nx):
     rx_graph = rx.networkx_converter(four_by_five_grid_nx, keep_attributes=True)
     graph = Graph.from_rustworkx(rx_graph)
-    assert (
-        len(graph.node_indices) == 20
-    ), f"Expected 20 nodes but got {len(graph.node_indices)}"
+    assert len(graph.node_indices) == 20, f"Expected 20 nodes but got {len(graph.node_indices)}"
     assert (
         graph.node_data(1)["population"] == 10
     ), f"Expected population of 10 but got {graph.node_data(1)['population']}"
@@ -177,17 +171,13 @@ def test_convert_from_nx_to_rx(four_by_five_graph_nx):
     converted_graph = graph.convert_from_nx_to_rx()
 
     # Same number of nodes
-    assert (
-        len(graph.node_indices) == 20
-    ), f"Expected 20 nodes but got {len(graph.node_indices)}"
+    assert len(graph.node_indices) == 20, f"Expected 20 nodes but got {len(graph.node_indices)}"
     assert (
         len(converted_graph.node_indices) == 20
     ), f"Expected 20 nodes but got {len(graph.node_indices)}"
 
     # Same number of edges
-    assert (
-        len(graph.edge_indices) == 26
-    ), f"Expected 26 edges but got {len(graph.edge_indices)}"
+    assert len(graph.edge_indices) == 26, f"Expected 26 edges but got {len(graph.edge_indices)}"
     assert (
         len(converted_graph.edge_indices) == 26
     ), f"Expected 26 edges but got {len(graph.edge_indices)}"
@@ -342,17 +332,11 @@ def test_subgraph(four_by_five_graph_rx):
 def test_num_connected_components(four_by_five_graph_nx, four_by_five_graph_rx):
     num_components_nx = four_by_five_graph_nx.num_connected_components()
     num_components_rx = four_by_five_graph_rx.num_connected_components()
-    assert (
-        num_components_nx == 2
-    ), f"num_components: expected 2 but got {num_components_nx}"
-    assert (
-        num_components_rx == 2
-    ), f"num_components: expected 2 but got {num_components_rx}"
+    assert num_components_nx == 2, f"num_components: expected 2 but got {num_components_nx}"
+    assert num_components_rx == 2, f"num_components: expected 2 but got {num_components_rx}"
 
 
-def test_subgraphs_for_connected_components(
-    four_by_five_graph_nx, four_by_five_graph_rx
-):
+def test_subgraphs_for_connected_components(four_by_five_graph_nx, four_by_five_graph_rx):
 
     subgraphs_nx = four_by_five_graph_nx.subgraphs_for_connected_components()
     subgraphs_rx = four_by_five_graph_rx.subgraphs_for_connected_components()
@@ -374,12 +358,8 @@ def test_subgraphs_for_connected_components(
     # Check that each subgraph (RX-based Graph) has correct nodes in it
     node_ids_rx_0 = subgraphs_rx[0].node_indices
     node_ids_rx_1 = subgraphs_rx[1].node_indices
-    original_nx_node_ids_rx_0 = subgraphs_rx[0].original_nx_node_ids_for_set(
-        node_ids_rx_0
-    )
-    original_nx_node_ids_rx_1 = subgraphs_rx[1].original_nx_node_ids_for_set(
-        node_ids_rx_1
-    )
+    original_nx_node_ids_rx_0 = subgraphs_rx[0].original_nx_node_ids_for_set(node_ids_rx_0)
+    original_nx_node_ids_rx_1 = subgraphs_rx[1].original_nx_node_ids_for_set(node_ids_rx_1)
     assert original_nx_node_ids_rx_0 == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
     assert original_nx_node_ids_rx_1 == {10, 11, 12, 13, 14, 15, 16, 17, 18, 19}
 

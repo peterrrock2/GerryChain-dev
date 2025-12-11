@@ -33,8 +33,6 @@ def polsby_popper(partition) -> Dict[int, float]:
     :rtype: Dict[int, float]
     """
     return {
-        part: compute_polsby_popper(
-            partition["area"][part], partition["perimeter"][part]
-        )
+        part: compute_polsby_popper(partition["area"][part], partition["perimeter"][part])
         for part in partition.parts
     }

@@ -108,12 +108,8 @@ class Election:
         #
         if isinstance(party_names_to_node_attribute_names, dict):
             self.parties = list(party_names_to_node_attribute_names.keys())
-            self.node_attribute_names = list(
-                party_names_to_node_attribute_names.values()
-            )
-            self.party_names_to_node_attribute_names = (
-                party_names_to_node_attribute_names
-            )
+            self.node_attribute_names = list(party_names_to_node_attribute_names.values())
+            self.party_names_to_node_attribute_names = party_names_to_node_attribute_names
         elif isinstance(party_names_to_node_attribute_names, list):
             # name of the party and the attribute name containing value is the same
             self.parties = party_names_to_node_attribute_names
@@ -229,9 +225,7 @@ class ElectionUpdater:
         if parent is None:
             previous_totals_for_party = {party: None for party in self.election.parties}
         else:
-            previous_totals_for_party = partition.parent[
-                self.election.alias
-            ].totals_for_party
+            previous_totals_for_party = partition.parent[self.election.alias].totals_for_party
         return previous_totals_for_party
 
 
@@ -251,10 +245,7 @@ def get_percents(counts: Dict, totals: Dict) -> Dict:
     :returns: A dictionary mapping each part in a partition to the percentage
     :rtype: Dict
     """
-    return {
-        part: counts[part] / totals[part] if totals[part] > 0 else math.nan
-        for part in totals
-    }
+    return {part: counts[part] / totals[part] if totals[part] > 0 else math.nan for part in totals}
 
 
 class ElectionResults:
@@ -311,8 +302,7 @@ class ElectionResults:
         }
 
         self.percents_for_party = {
-            party: get_percents(counts[party], self.totals)
-            for party in election.parties
+            party: get_percents(counts[party], self.totals) for party in election.parties
         }
 
     def __str__(self):
@@ -359,9 +349,7 @@ class ElectionResults:
         """
         if region is not None:
             return self.percents_for_party[party][region]
-        return sum(self.votes(party)) / sum(
-            self.totals[region] for region in self.regions
-        )
+        return sum(self.votes(party)) / sum(self.totals[region] for region in self.regions)
 
     def percents(self, party: str) -> Tuple:
         """
@@ -425,8 +413,7 @@ class ElectionResults:
         :rtype: bool
         """
         return all(
-            self.totals_for_party[party][region]
-            > self.totals_for_party[opponent][region]
+            self.totals_for_party[party][region] > self.totals_for_party[opponent][region]
             for opponent in self.election.parties
             if opponent != party
         )
@@ -494,9 +481,7 @@ class ElectionResults:
         return pm.partisan_gini(self)
 
 
-def format_part_results(
-    percents_for_party: Dict[str, Dict[int, float]], part: int
-) -> str:
+def format_part_results(percents_for_party: Dict[str, Dict[int, float]], part: int) -> str:
     """
     :param percents_for_party: A dictionary mapping party names to a dict
         containing the percentage of votes that party received in each part

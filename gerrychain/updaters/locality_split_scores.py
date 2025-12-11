@@ -164,15 +164,12 @@ class LocalitySplits:
         if self.localities == []:
             self.localitydict = {}
             for node_id in partition.graph.node_indices:
-                self.localitydict[node_id] = partition.graph.node_data(node_id)[
-                    self.col_id
-                ]
+                self.localitydict[node_id] = partition.graph.node_data(node_id)[self.col_id]
 
             self.localities = set(list(self.localitydict.values()))
 
         locality_splits = {
-            k: [self.localitydict[v] for v in d]
-            for k, d in partition.assignment.parts.items()
+            k: [self.localitydict[v] for v in d] for k, d in partition.assignment.parts.items()
         }
         self.locality_splits = {k: Counter(v) for k, v in locality_splits.items()}
 
@@ -293,9 +290,7 @@ class LocalitySplits:
         for n in partition.graph.node_indices:
             locality = partition.graph.node_data(n)[self.col_id]
             if locality not in locality_intersections:
-                locality_intersections[locality] = set(
-                    [partition.assignment.mapping[n]]
-                )
+                locality_intersections[locality] = set([partition.assignment.mapping[n]])
 
             locality_intersections[locality].update([partition.assignment.mapping[n]])
 
@@ -443,9 +438,7 @@ class LocalitySplits:
             vtds = district_dict[district]
             locality_pop = {k: 0 for k in self.localities}
             for vtd in vtds:
-                locality_pop[self.localitydict[vtd]] += partition.graph.node_data(vtd)[
-                    self.pop_col
-                ]
+                locality_pop[self.localitydict[vtd]] += partition.graph.node_data(vtd)[self.pop_col]
             district_dict[district] = locality_pop
 
         district_dict_inv = defaultdict(dict)

@@ -7,6 +7,7 @@ from gerrychain.updaters import (
     interior_boundaries,
     perimeter,
 )
+
 from .partition import Partition
 
 

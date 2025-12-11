@@ -77,9 +77,7 @@ def test_cut_edges_can_handle_multiple_flips(three_by_three_grid):
     result = new_partition["cut_edges"]
 
     naive_cut_edges = {
-        tuple(sorted(edge))
-        for edge in partition.graph.edges
-        if new_partition.crosses_parts(edge)
+        tuple(sorted(edge)) for edge in partition.graph.edges if new_partition.crosses_parts(edge)
     }
 
     assert result == naive_cut_edges
@@ -124,14 +122,10 @@ def test_cut_edges_by_part_gives_same_total_edges_as_naive_method(three_by_three
 
     result = new_partition["cut_edges_by_part"]
     naive_cut_edges = {
-        tuple(sorted(edge))
-        for edge in partition.graph.edges
-        if new_partition.crosses_parts(edge)
+        tuple(sorted(edge)) for edge in partition.graph.edges if new_partition.crosses_parts(edge)
     }
 
-    assert naive_cut_edges == {
-        tuple(sorted(edge)) for part in result for edge in result[part]
-    }
+    assert naive_cut_edges == {tuple(sorted(edge)) for part in result for edge in result[part]}
 
 
 def test_implementation_of_cut_edges_matches_naive_method(three_by_three_grid):
@@ -147,9 +141,7 @@ def test_implementation_of_cut_edges_matches_naive_method(three_by_three_grid):
 
     result = cut_edges(new_partition)
 
-    naive_cut_edges = {
-        edge for edge in partition.graph.edges if new_partition.crosses_parts(edge)
-    }
+    naive_cut_edges = {edge for edge in partition.graph.edges if new_partition.crosses_parts(edge)}
 
     assert edge_set_equal(result, naive_cut_edges)
 
@@ -183,8 +175,6 @@ def test_cut_edges_matches_naive_cut_edges_at_every_step(proposal, number_of_ste
     )
 
     for state in chain:
-        naive_cut_edges = {
-            edge for edge in state.graph.edges if state.crosses_parts(edge)
-        }
+        naive_cut_edges = {edge for edge in state.graph.edges if state.crosses_parts(edge)}
 
         assert naive_cut_edges == state["cut_edges"]

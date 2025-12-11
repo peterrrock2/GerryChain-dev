@@ -133,12 +133,10 @@ def test_nx_rx_subgraphs_agree(gerrychain_nx_graph, gerrychain_rx_graph):
 def test_nx_rx_degrees_agree(gerrychain_nx_graph, gerrychain_rx_graph):
     # Verify that the degree of each node agrees between NX and RX versions
     nx_degrees = {
-        node_id: gerrychain_nx_graph.degree(node_id)
-        for node_id in gerrychain_nx_graph.node_indices
+        node_id: gerrychain_nx_graph.degree(node_id) for node_id in gerrychain_nx_graph.node_indices
     }
     rx_degrees = {
-        node_id: gerrychain_rx_graph.degree(node_id)
-        for node_id in gerrychain_rx_graph.node_indices
+        node_id: gerrychain_rx_graph.degree(node_id) for node_id in gerrychain_rx_graph.node_indices
     }
     for node_id in gerrychain_nx_graph.node_indices:
         assert nx_degrees[node_id] == rx_degrees[node_id]

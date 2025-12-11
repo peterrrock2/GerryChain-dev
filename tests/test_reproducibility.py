@@ -82,13 +82,9 @@ def test_pa_freeze():
     graph = Graph.from_json("docs/_static/PA_VTDs.json")
 
     my_updaters = {"population": updaters.Tally("TOT_POP", alias="population")}
-    initial_partition = GeographicPartition(
-        graph, assignment="2011_PLA_1", updaters=my_updaters
-    )
+    initial_partition = GeographicPartition(graph, assignment="2011_PLA_1", updaters=my_updaters)
 
-    ideal_population = sum(initial_partition["population"].values()) / len(
-        initial_partition
-    )
+    ideal_population = sum(initial_partition["population"].values()) / len(initial_partition)
 
     # We use functools.partial to bind the extra parameters (pop_col, pop_target, epsilon, node_repeats)
     # of the recom proposal.
@@ -100,9 +96,7 @@ def test_pa_freeze():
         node_repeats=2,
     )
 
-    pop_constraint = constraints.within_percent_of_ideal_population(
-        initial_partition, 0.02
-    )
+    pop_constraint = constraints.within_percent_of_ideal_population(initial_partition, 0.02)
 
     chain = MarkovChain(
         proposal=proposal,

@@ -73,9 +73,7 @@ def negative(x):
     return x < 0
 
 
-def to_latlon(
-    easting, northing, zone_number, zone_letter=None, northern=None, strict=True
-):
+def to_latlon(easting, northing, zone_number, zone_letter=None, northern=None, strict=True):
     """This function convert an UTM coordinate into Latitude and Longitude
 
      Parameters
@@ -109,13 +107,9 @@ def to_latlon(
 
     if strict:
         if not in_bounds(easting, 100000, 1000000, upper_strict=True):
-            raise OutOfRangeError(
-                "easting out of range (must be between 100.000 m and 999.999 m)"
-            )
+            raise OutOfRangeError("easting out of range (must be between 100.000 m and 999.999 m)")
         if not in_bounds(northing, 0, 10000000):
-            raise OutOfRangeError(
-                "northing out of range (must be between 0 m and 10.000.000 m)"
-            )
+            raise OutOfRangeError("northing out of range (must be between 0 m and 10.000.000 m)")
 
     check_valid_zone(zone_number, zone_letter)
 
@@ -167,8 +161,7 @@ def to_latlon(
 
     latitude = (
         p_rad
-        - (p_tan / r)
-        * (d2 / 2 - d4 / 24 * (5 + 3 * p_tan2 + 10 * c - 4 * c2 - 9 * E_P2))
+        - (p_tan / r) * (d2 / 2 - d4 / 24 * (5 + 3 * p_tan2 + 10 * c - 4 * c2 - 9 * E_P2))
         + d6 / 720 * (61 + 90 * p_tan2 + 298 * c + 45 * p_tan4 - 252 * E_P2 - 3 * c2)
     )
 
@@ -203,13 +196,9 @@ def from_latlon(latitude, longitude, force_zone_number=None, force_zone_letter=N
     .. _[1]: http://www.jaworski.ca/utmzones.htm
     """
     if not in_bounds(latitude, -80.0, 84.0):
-        raise OutOfRangeError(
-            "latitude out of range (must be between 80 deg S and 84 deg N)"
-        )
+        raise OutOfRangeError("latitude out of range (must be between 80 deg S and 84 deg N)")
     if not in_bounds(longitude, -180.0, 180.0):
-        raise OutOfRangeError(
-            "longitude out of range (must be between 180 deg W and 180 deg E)"
-        )
+        raise OutOfRangeError("longitude out of range (must be between 180 deg W and 180 deg E)")
     if force_zone_number is not None:
         check_valid_zone(force_zone_number, force_zone_letter)
 

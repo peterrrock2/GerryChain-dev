@@ -177,9 +177,7 @@ def test_vote_proportions_sum_to_one(partition_with_election):
 
 
 def test_election_result_has_a_cute_str_method():
-    election = Election(
-        "2008 Presidential", {"Democratic": [3, 1, 2], "Republican": [1, 2, 1]}
-    )
+    election = Election("2008 Presidential", {"Democratic": [3, 1, 2], "Republican": [1, 2, 1]})
     results = ElectionResults(
         election,
         {"Democratic": {0: 3, 1: 1, 2: 2}, "Republican": {0: 1, 1: 2, 2: 1}},
@@ -219,9 +217,7 @@ def _convert_dict_of_set_of_rx_node_ids_to_set_of_nx_node_ids(
     converted_set = {}
     if nx_to_rx_node_id_map is not None:  # means graph was converted from NX
         # reverse the map
-        rx_to_nx_node_id_map = {
-            value: key for key, value in nx_to_rx_node_id_map.items()
-        }
+        rx_to_nx_node_id_map = {value: key for key, value in nx_to_rx_node_id_map.items()}
         converted_set = {}
         for part, set_of_rx_nodes in dict_of_set_of_rx_nodes.items():
             converted_set_of_rx_nodes = {
@@ -283,9 +279,7 @@ def test_exterior_boundaries_as_a_set(three_by_three_grid):
 
     nx_flips = {4: 2, 2: 1, 5: 1}
     rx_to_nx_node_id_map = {v: k for k, v in nx_to_rx_node_id_map.items()}
-    rx_flips = {
-        rx_to_nx_node_id_map[nx_node_id]: part for nx_node_id, part in nx_flips.items()
-    }
+    rx_flips = {rx_to_nx_node_id_map[nx_node_id]: part for nx_node_id, part in nx_flips.items()}
 
     new_partition = Partition(parent=partition, flips=rx_flips)
 
@@ -331,9 +325,7 @@ def test_exterior_boundaries(three_by_three_grid):
     # Convert the flips into internal node_ids
     internal_flips = {}
     for node_id, part in flips.items():
-        internal_node_id = partition.graph.internal_node_id_for_original_nx_node_id(
-            node_id
-        )
+        internal_node_id = partition.graph.internal_node_id_for_original_nx_node_id(node_id)
         internal_flips[internal_node_id] = part
 
     new_partition = Partition(parent=partition, flips=internal_flips)
@@ -401,8 +393,6 @@ def test_elections_match_the_naive_computation(partition_with_election):
 
 def expected_tally(partition, node_attribute_name):
     return {
-        part: sum(
-            partition.graph.node_data(node)[node_attribute_name] for node in nodes
-        )
+        part: sum(partition.graph.node_data(node)[node_attribute_name] for node in nodes)
         for part, nodes in partition.parts.items()
     }

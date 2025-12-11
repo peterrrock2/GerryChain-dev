@@ -63,6 +63,7 @@ test:
 
 format:
 	@echo "Formatting codebase with black..."
+	uv run isort $(PKG) $(TEST_PATHS)
 	uv run black $(PKG) $(TEST_PATHS)
 
 lint: 

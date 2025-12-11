@@ -1,13 +1,14 @@
 import random
 from collections import defaultdict
 
+import networkx
+
 from gerrychain import Graph, MarkovChain, Partition
 from gerrychain.accept import always_accept
 from gerrychain.constraints import no_vanishing_districts, single_flip_contiguous
 from gerrychain.grid import Grid
 from gerrychain.proposals import propose_random_flip
 from gerrychain.updaters.tally import DataTally, Tally
-import networkx
 
 random.seed(2018)
 
