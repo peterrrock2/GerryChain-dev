@@ -1,14 +1,16 @@
+import random
 from collections import defaultdict
 
-from gerrychain import MarkovChain, Partition, Graph
+from gerrychain import Graph, MarkovChain, Partition
 from gerrychain.accept import always_accept
 from gerrychain.constraints import no_vanishing_districts, single_flip_contiguous
 from gerrychain.grid import Grid
 from gerrychain.proposals import propose_random_flip
-import random
 from gerrychain.updaters.tally import DataTally, Tally
-random.seed(2018)
 import networkx
+
+random.seed(2018)
+
 
 def random_assignment(graph, num_districts):
     return {node: random.choice(range(num_districts)) for node in graph.nodes}
@@ -43,9 +45,9 @@ def test_data_tally_gives_expected_value(three_by_three_grid):
     partition = Partition(three_by_three_grid, assignment, updaters)
 
     # Note that in general a flip using node_ids generated before creating
-    # a partition should be translated into "internal" RX-Graph based 
+    # a partition should be translated into "internal" RX-Graph based
     # node_ids.  In this case it is not needed, because it doesn't matter
-    # whether we are using the "original" or the "internal" node_id for 
+    # whether we are using the "original" or the "internal" node_id for
     # first_node because it still refers to the same node and nothing else
     # is going on.
 

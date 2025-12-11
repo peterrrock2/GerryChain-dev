@@ -1,10 +1,11 @@
 import collections
 import math
 import warnings
+from typing import Dict, List, Optional, Type, Union
+
+import pandas
 
 from .flows import flows_from_changes, on_flow
-from typing import Dict, Union, List, Optional, Type
-import pandas
 
 
 class DataTally:
@@ -60,7 +61,9 @@ class DataTally:
                 graph = partition.graph
                 node_ids = partition.graph.node_indices
                 attribute = self.data
-                self.data = {node_id: graph.node_data(node_id)[attribute] for node_id in node_ids}
+                self.data = {
+                    node_id: graph.node_data(node_id)[attribute] for node_id in node_ids
+                }
 
             tally = collections.defaultdict(int)
             for node_id, part in partition.assignment.items():

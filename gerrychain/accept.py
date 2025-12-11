@@ -9,6 +9,7 @@ Last Updated: 11 Jan 2024
 """
 
 import random
+
 from gerrychain.partition import Partition
 
 

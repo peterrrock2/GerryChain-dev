@@ -10,8 +10,8 @@ unspecified because of import issues.
 """
 
 import warnings
-from geopandas import GeoDataFrame
 from typing import Dict
+from geopandas import GeoDataFrame
 
 
 def neighbors(df: GeoDataFrame, adjacency: str) -> Dict:

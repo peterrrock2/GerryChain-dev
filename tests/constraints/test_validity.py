@@ -4,15 +4,18 @@ import networkx as nx
 import numpy
 import pytest
 
-from gerrychain.constraints import (SelfConfiguringLowerBound, Validator,
-                                    contiguous, 
-                                    districts_within_tolerance,
-                                    no_vanishing_districts,
-                                    single_flip_contiguous,
-                                    deviation_from_ideal)
+from gerrychain.constraints import (
+    SelfConfiguringLowerBound,
+    Validator,
+    contiguous,
+    deviation_from_ideal,
+    districts_within_tolerance,
+    no_vanishing_districts,
+    single_flip_contiguous,
+)
+from gerrychain.graph import Graph
 from gerrychain.partition import Partition
 from gerrychain.partition.partition import get_assignment
-from gerrychain.graph import Graph
 
 
 @pytest.fixture
@@ -67,22 +70,9 @@ def test_discontiguous_with_contiguous_no_flips_is_false(discontiguous_partition
 
 
 def test_discontiguous_with_single_flip_contiguous_no_flips_is_false(
-    discontiguous_partition
+    discontiguous_partition,
 ):
     assert not single_flip_contiguous(discontiguous_partition)
-
-
-def test_discontiguous_with_contiguous_no_flips_is_false(discontiguous_partition):
-    assert not contiguous(discontiguous_partition)
-
-
-def test_discontiguous_with_contiguous_flips_is_false(
-    discontiguous_partition_with_flips
-):
-    part, test_flips = discontiguous_partition_with_flips
-    # frm: TODO: Testing:  Figure out whether test_flips are in original node_ids or internal RX node_ids
-    discontiguous_partition2 = part.flip(test_flips)
-    assert not contiguous(discontiguous_partition2)
 
 
 @pytest.mark.xfail(
@@ -90,7 +80,7 @@ def test_discontiguous_with_contiguous_flips_is_false(
     "when the previous partition is discontiguous"
 )
 def test_discontiguous_with_single_flip_contiguous_flips_is_false(
-    discontiguous_partition_with_flips
+    discontiguous_partition_with_flips,
 ):
     part, test_flips = discontiguous_partition_with_flips
     # frm: TODO: Testing:  Figure out whether test_flips are in original node_ids or internal RX node_ids
@@ -99,7 +89,7 @@ def test_discontiguous_with_single_flip_contiguous_flips_is_false(
 
 
 def test_discontiguous_with_contiguous_flips_is_false(
-    discontiguous_partition_with_flips
+    discontiguous_partition_with_flips,
 ):
     part, test_flips = discontiguous_partition_with_flips
     # frm: TODO: Testing:  Figure out whether test_flips are in original node_ids or internal RX node_ids
@@ -175,11 +165,13 @@ def test_no_vanishing_districts_works():
     partition = MagicMock()
     partition.parent = parent
     partition.assignment = parent.assignment.copy()
-    partition.assignment.update_flows({1: {"out": set(), "in": {2}}, 2: {"out": {2}, "in": set()}})
+    partition.assignment.update_flows(
+        {1: {"out": set(), "in": {2}}, 2: {"out": {2}, "in": set()}}
+    )
 
     assert not no_vanishing_districts(partition)
 
+
 def test_deviation_from_ideal():
     mock_partition = {"population": {0: 99.0, 1: 101.0}}
-    assert deviation_from_ideal(mock_partition, "population") == \
-        {0: -0.01, 1: 0.01}
+    assert deviation_from_ideal(mock_partition, "population") == {0: -0.01, 1: 0.01}

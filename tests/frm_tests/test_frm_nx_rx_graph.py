@@ -2,37 +2,31 @@
 # Overview of test_frm_nx_rx_graph.py
 #######################################################
 """
- 
-A collection of tests to verify that the new GerryChain 
+
+A collection of tests to verify that the new GerryChain
 Graph object works the same with NetworkX and RustworkX.
 
 
 """
 
-import matplotlib.pyplot as plt
-from gerrychain import (Partition, Graph, MarkovChain,
-                        updaters, constraints, accept)
-from gerrychain.proposals import recom
-from gerrychain.constraints import contiguous
-from functools import partial
-import pandas
-
 import os
-import rustworkx as rx
-import networkx as nx
-
-import pytest
-
 
 # Set the random seed so that the results are reproducible!
 import random
+
+import pytest
+import rustworkx as rx
+
+from gerrychain import Graph
+
 random.seed(2024)
 
 ############################################################
 # Create Graph Objects - both direct NX.Graph and RX.PyGraph
-# objects and two GerryChain Graph objects that embed the 
+# objects and two GerryChain Graph objects that embed the
 # NX and RX graphs.
 ############################################################
+
 
 @pytest.fixture(scope="module")
 def json_file_path():
@@ -43,51 +37,61 @@ def json_file_path():
     # print("json file is: ", json_file_path)
     return path_for_json_file
 
+
 @pytest.fixture(scope="module")
 def gerrychain_nx_graph(json_file_path):
     # Create an NX based Graph object from the JSON
     graph = Graph.from_json(json_file_path)
     print("gerrychain_nx_graph: len(graph): ", len(graph))
-    return(graph)
+    return graph
+
 
 @pytest.fixture(scope="module")
 def nx_graph(gerrychain_nx_graph):
     # Fetch the NX graph object from inside the Graph object
     return gerrychain_nx_graph.get_nx_graph()
 
+
 @pytest.fixture(scope="module")
 def rx_graph(nx_graph):
     # Create an RX graph object from NX, preserving node data
     return rx.networkx_converter(nx_graph, keep_attributes=True)
+
 
 @pytest.fixture(scope="module")
 def gerrychain_rx_graph(rx_graph):
     # Create a Graph object with an RX graph inside
     return Graph.from_rustworkx(rx_graph)
 
+
 ##################
 # Start of Tests
 ##################
+
 
 def test_sanity():
     # frm: if you call pytest with -rP, then it will show stdout for tests
     print("test_sanity(): called")
     assert True
 
+
 def test_nx_rx_sets_of_nodes_agree(nx_graph, rx_graph):
     nx_set_of_nodes = set(nx_graph.nodes())
     rx_set_of_nodes = set(rx_graph.node_indices())
     assert nx_set_of_nodes == rx_set_of_nodes
+
 
 def test_nx_rx_node_data_agree(gerrychain_nx_graph, gerrychain_rx_graph):
     nx_data_dict = gerrychain_nx_graph.node_data(1)
     rx_data_dict = gerrychain_rx_graph.node_data(1)
     assert nx_data_dict == rx_data_dict
 
+
 def test_nx_rx_node_indices_agree(gerrychain_nx_graph, gerrychain_rx_graph):
     nx_node_indices = gerrychain_nx_graph.node_indices
     rx_node_indices = gerrychain_rx_graph.node_indices
     assert nx_node_indices == rx_node_indices
+
 
 def test_nx_rx_edges_agree(gerrychain_nx_graph, gerrychain_rx_graph):
     # TODO: Testing:  Rethink this test.  At the moment it relies on the edge_list()
@@ -98,6 +102,7 @@ def test_nx_rx_edges_agree(gerrychain_nx_graph, gerrychain_rx_graph):
     rx_edges = set(gerrychain_rx_graph.edge_list())
     assert nx_edges == rx_edges
 
+
 def test_nx_rx_node_neighbors_agree(gerrychain_nx_graph, gerrychain_rx_graph):
     for i in gerrychain_nx_graph:
         # Need to convert to set, because ordering of neighbor nodes differs in the lists
@@ -105,8 +110,16 @@ def test_nx_rx_node_neighbors_agree(gerrychain_nx_graph, gerrychain_rx_graph):
         rx_neighbors = set(gerrychain_rx_graph.neighbors(i))
         assert nx_neighbors == rx_neighbors
 
+
 def test_nx_rx_subgraphs_agree(gerrychain_nx_graph, gerrychain_rx_graph):
-    subgraph_nodes = [0,1,2,3,4,5]      # TODO: Testing: make this a fixture dependent on JSON graph
+    subgraph_nodes = [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+    ]  # TODO: Testing: make this a fixture dependent on JSON graph
     nx_subgraph = gerrychain_nx_graph.subgraph(subgraph_nodes)
     rx_subgraph = gerrychain_rx_graph.subgraph(subgraph_nodes)
     for node_id in nx_subgraph:
@@ -116,13 +129,16 @@ def test_nx_rx_subgraphs_agree(gerrychain_nx_graph, gerrychain_rx_graph):
     # frm: TODO: Testing:  This does not test that the rx_subgraph has the exact same number of
     #                   nodes as the nx_subgraph, and it does not test edge data...
 
+
 def test_nx_rx_degrees_agree(gerrychain_nx_graph, gerrychain_rx_graph):
     # Verify that the degree of each node agrees between NX and RX versions
     nx_degrees = {
-      node_id: gerrychain_nx_graph.degree(node_id) for node_id in gerrychain_nx_graph.node_indices
+        node_id: gerrychain_nx_graph.degree(node_id)
+        for node_id in gerrychain_nx_graph.node_indices
     }
     rx_degrees = {
-      node_id: gerrychain_rx_graph.degree(node_id) for node_id in gerrychain_rx_graph.node_indices
+        node_id: gerrychain_rx_graph.degree(node_id)
+        for node_id in gerrychain_rx_graph.node_indices
     }
     for node_id in gerrychain_nx_graph.node_indices:
         assert nx_degrees[node_id] == rx_degrees[node_id]
@@ -173,33 +189,29 @@ frm: TODO: Testing:
            graph.edges[edge]["weight"] = random.random()
              In RX, assigning the weight to an edge is done differently...
              Note that edge_indices currently works exactly the same for both
-             NX and RX - returning a set of tuples (for edges).  However, 
+             NX and RX - returning a set of tuples (for edges).  However,
              assigning a value to the "weight" attribute of an edge is done
              differently...
         * islands()
 """
 
 
-
-
-
-
 ###    my_updaters = {
 ###        "population": updaters.Tally("TOTPOP"),
 ###        "cut_edges": updaters.cut_edges
 ###    }
-###    
+###
 ###    initial_partition = Partition(
 ###        nx_graph,
 ###        assignment="district",
 ###        updaters=my_updaters
 ###    )
-###    
+###
 ###    # This should be 8 since each district has 1 person in it.
 ###    # Note that the key "population" corresponds to the population updater
 ###    # that we defined above and not with the population column in the json file.
 ###    ideal_population = sum(initial_partition["population"].values()) / len(initial_partition)
-###    
+###
 ###    proposal = partial(
 ###        recom,
 ###        pop_col="TOTPOP",
@@ -207,9 +219,9 @@ frm: TODO: Testing:
 ###        epsilon=0.01,
 ###        node_repeats=2
 ###    )
-###    
+###
 ###    print("Got proposal")
-###    
+###
 ###    recom_chain = MarkovChain(
 ###        proposal=proposal,
 ###        constraints=[contiguous],
@@ -217,16 +229,16 @@ frm: TODO: Testing:
 ###        initial_state=initial_partition,
 ###        total_steps=40
 ###    )
-###    
+###
 ###    print("Set up Markov Chain")
-###    
+###
 ###    assignment_list = []
-###    
+###
 ###    for i, item in enumerate(recom_chain):
 ###        print(f"Finished step {i+1}/{len(recom_chain)}")
 ###        assignment_list.append(item.assignment)
-###    
+###
 ###    print("Enumerated the chain: number of entries in list is: ", len(assignment_list))
-###    
+###
 ###    def test_success():
 ###        len(assignment_list) == 40

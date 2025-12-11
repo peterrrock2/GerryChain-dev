@@ -1,12 +1,14 @@
+import random
+from functools import partial
+
+import numpy as np
+import pytest
+
 from gerrychain import Partition
-from gerrychain.optimization import Gingleator
 from gerrychain.constraints import contiguous
+from gerrychain.optimization import Gingleator
 from gerrychain.proposals import recom
 from gerrychain.updaters import Tally
-from functools import partial
-import pytest
-import numpy as np
-import random
 
 random.seed(2024)
 
@@ -77,7 +79,7 @@ def test_ginglator_needs_min_perc_or_min_pop_col(four_by_five_grid_for_opt):
     )
 
     with pytest.raises(ValueError) as gingle_err:
-        gingles = Gingleator(
+        _ = Gingleator(
             proposal=proposal,
             constraints=[contiguous],
             initial_state=initial_partition,
@@ -119,7 +121,7 @@ def test_ginglator_warns_if_min_perc_and_min_pop_col_set(four_by_five_grid_for_o
     )
 
     with pytest.warns() as record:
-        gingles = Gingleator(
+        _ = Gingleator(
             proposal=proposal,
             constraints=[contiguous],
             initial_state=initial_partition,

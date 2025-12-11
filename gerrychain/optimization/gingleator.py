@@ -1,11 +1,13 @@
-from .optimization import SingleMetricOptimizer
-
-from functools import partial
-import numpy as np
 import warnings
+from functools import partial
 from typing import Callable, Iterable, Optional, Union
+
+import numpy as np
+
+from gerrychain.constraints import Bounds, Validator
 from gerrychain.partition import Partition
-from gerrychain.constraints import Validator, Bounds
+
+from .optimization import SingleMetricOptimizer
 
 
 class Gingleator(SingleMetricOptimizer):
@@ -13,9 +15,9 @@ class Gingleator(SingleMetricOptimizer):
     `Gingleator` is a child class of `SingleMetricOptimizer` which can be used to search for plans
     with increased numbers of Gingles' districts.
 
-    A gingles district (named for the Supreme Court case Thornburg v. Gingles) is a district that is
-    majority-minority.  aka 50% + 1 of some population subgroup.  Demonstrating additional Gingles
-    districts is one of the litmus tests used in bringing forth a VRA case.
+    A gingles district (named for the Supreme Court case Thornburg v. Gingles) is a district
+    that is majority-minority.  aka 50% + 1 of some population subgroup.  Demonstrating additional
+    Gingles districts is one of the litmus tests used in bringing forth a VRA case.
     """
 
     def __init__(

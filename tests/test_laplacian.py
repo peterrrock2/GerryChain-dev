@@ -1,27 +1,26 @@
-
-import pytest
 import networkx as nx
-import rustworkx as rx
 import numpy as np
+import pytest
+import rustworkx as rx
+
 from gerrychain.graph import Graph
-import gerrychain.tree as gctree
 
 """
 This tests whether we compute the same laplacian matrix for NX and RX
 based Graph objects.
 
 The NX version is computed (as was true in the old code) by a built-in
-NetworkX routine.  The RX version is computed by code added when we 
+NetworkX routine.  The RX version is computed by code added when we
 supported RX as the embedded graph object.
 
-The NX version produces ints from the code below, while the RX 
+The NX version produces ints from the code below, while the RX
 version produces floats.  I don't think this matters as the laplacian
-matrix is used to do numerical calculations, so that code should 
+matrix is used to do numerical calculations, so that code should
 happily use ints or floats, but it means that for this test I need
 to convert the NX version's result to have floating point values.
 """
 
-# frm: TODO: Testing:  Add additional tests for laplacian matrix calculations, in 
+# frm: TODO: Testing:  Add additional tests for laplacian matrix calculations, in
 #             particular, add a test for normalized_laplacian_matrix()
 #             once that routine has been implemented.
 
@@ -50,8 +49,10 @@ def are_sparse_matrices_equal(sparse_matrix1, sparse_matrix2, rtol=1e-05, atol=1
 
     # Check for equality of structural components (indices and indptr)
     # These should be exact matches
-    if not (np.array_equal(sparse_matrix1.indices, sparse_matrix2.indices) and
-            np.array_equal(sparse_matrix1.indptr, sparse_matrix2.indptr)):
+    if not (
+        np.array_equal(sparse_matrix1.indices, sparse_matrix2.indices)
+        and np.array_equal(sparse_matrix1.indptr, sparse_matrix2.indptr)
+    ):
         return False
 
     # Check for approximate equality of data (values)
@@ -61,12 +62,15 @@ def are_sparse_matrices_equal(sparse_matrix1, sparse_matrix2, rtol=1e-05, atol=1
 
     return True
 
+
 # Create equivalent NX and RX graphs from scratch
+
 
 @pytest.fixture
 def nx_graph():
     this_nx_graph = nx.Graph([(0, 1), (0, 2), (1, 2), (2, 3)])
     return this_nx_graph
+
 
 @pytest.fixture
 def rx_graph():
@@ -93,6 +97,7 @@ def test_nx_rx_laplacian_matrix_equality(nx_graph, rx_graph):
     float_gc_nx_laplacian_matrix = gc_nx_laplacian_matrix.astype(float)
 
     # test equality
-    matrices_are_equal = are_sparse_matrices_equal(float_gc_nx_laplacian_matrix, gc_rx_laplacian_matrix)
-    assert(matrices_are_equal)
-
+    matrices_are_equal = are_sparse_matrices_equal(
+        float_gc_nx_laplacian_matrix, gc_rx_laplacian_matrix
+    )
+    assert matrices_are_equal

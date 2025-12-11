@@ -1,4 +1,5 @@
 import math
+
 from gerrychain.metrics.compactness import compute_polsby_popper
 
 

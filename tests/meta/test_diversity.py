@@ -1,10 +1,9 @@
 import networkx
 
-from gerrychain.partition import GeographicPartition, Partition
-from gerrychain.proposals import propose_random_flip
 from gerrychain.graph import Graph
+from gerrychain.meta import DiversityStats, collect_diversity_stats
+from gerrychain.partition import Partition
 from gerrychain.updaters import cut_edges
-from gerrychain.meta import collect_diversity_stats, DiversityStats
 
 
 def test_stats_one_step():

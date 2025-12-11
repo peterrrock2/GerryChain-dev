@@ -1,6 +1,7 @@
 import os
-import pytest
 import random
+
+import pytest
 
 random.seed(2018)
 
@@ -63,18 +64,18 @@ def test_repeatable(three_by_three_grid):
 
 @pytest.mark.slow
 def test_pa_freeze():
+    import hashlib
+    from functools import partial
+
     from gerrychain import (
         GeographicPartition,
         Graph,
         MarkovChain,
-        proposals,
-        updaters,
-        constraints,
         accept,
+        constraints,
+        updaters,
     )
-    import hashlib
     from gerrychain.proposals import recom
-    from functools import partial
 
     random.seed(2018)
 

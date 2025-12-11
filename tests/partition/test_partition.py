@@ -5,9 +5,9 @@ from tempfile import TemporaryDirectory
 import networkx
 import pytest
 
+from gerrychain.graph import Graph
 from gerrychain.partition import GeographicPartition, Partition
 from gerrychain.proposals import propose_random_flip
-from gerrychain.graph import Graph
 from gerrychain.updaters import cut_edges
 
 
@@ -126,10 +126,12 @@ def test_can_be_created_from_a_districtr_file(graph, districtr_plan_file):
     partition = Partition.from_districtr_file(graph, districtr_plan_file)
 
     # Convert internal node_ids of the partition's graph to "original" node_ids
-    internal_node_assignment = partition.assignment.to_dict() 
+    internal_node_assignment = partition.assignment.to_dict()
     original_node_assignment = {}
     for internal_node_id, part in internal_node_assignment.items():
-        original_nx_node_id = partition.graph.original_nx_node_id_for_internal_node_id(internal_node_id)
+        original_nx_node_id = partition.graph.original_nx_node_id_for_internal_node_id(
+            internal_node_id
+        )
         original_node_assignment[original_nx_node_id] = part
 
     assert original_node_assignment == {

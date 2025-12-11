@@ -4,6 +4,7 @@ Simple tooling to collect diversity stats on chain runs
 
 from dataclasses import dataclass
 from typing import Iterable, Tuple
+
 from gerrychain.partition import Partition
 
 
@@ -65,7 +66,7 @@ def collect_diversity_stats(
     for partition in chain:
         steps_taken += 1
 
-        for district, nodes in partition.assignment.parts.items():
+        for _, nodes in partition.assignment.parts.items():
             hashable_nodes = tuple(sorted(list(nodes)))
             if hashable_nodes not in seen_districts:
                 unique_districts += 1

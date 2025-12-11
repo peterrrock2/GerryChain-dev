@@ -3,12 +3,11 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 import geopandas as gp
+import networkx
 import pandas
 import pytest
-from shapely.geometry import Polygon
 from pyproj import CRS
-
-import networkx
+from shapely.geometry import Polygon
 
 from gerrychain.graph import Graph
 from gerrychain.graph.geo import GeometryError
@@ -70,7 +69,7 @@ def target_file():
 
 
 def test_add_data_to_graph_can_handle_column_names_that_start_with_numbers():
-    
+
     # frm: Test has been modified to work with new Graph object that has an NetworkX.Graph
     #           object embedded inside it.  I am not sure if this test actually tests
     #           anything useful anymore...
@@ -108,6 +107,7 @@ def test_join_can_handle_right_index():
     assert graph.node_data("01")["16SenDVote"] == 20
     assert graph.node_data("02")["16SenDVote"] == 30
     assert graph.node_data("03")["16SenDVote"] == 50
+
 
 def test_make_graph_from_dataframe_creates_graph(geodataframe):
     graph = Graph.from_geodataframe(geodataframe)
@@ -205,15 +205,16 @@ def test_computes_boundary_perims(geodataframe_with_boundary):
 
 def edge_set_equal(set1, set2):
     """
-    Returns true if the two sets have the same edges.  
-    
-    The complication is that  for an edge, (1,2) is the same as (2,1), so to compare them you 
-    need to canonicalize the edges somehow.  This code just takes set1 and set2 and creates 
+    Returns true if the two sets have the same edges.
+
+    The complication is that  for an edge, (1,2) is the same as (2,1), so to compare them you
+    need to canonicalize the edges somehow.  This code just takes set1 and set2 and creates
     a new set for each that has both edge pairs for each edge, and it then compares those new sets.
     """
-    canonical_set1 = {(y, x) for x, y in set1} | set1 
+    canonical_set1 = {(y, x) for x, y in set1} | set1
     canonical_set2 = {(y, x) for x, y in set2} | set2
     return canonical_set1 == canonical_set2
+
 
 def test_from_file_adds_all_data_by_default(shapefile):
     graph = Graph.from_file(shapefile)
@@ -237,7 +238,7 @@ def test_from_file_and_then_to_json_does_not_error(shapefile, target_file):
 
 def test_from_file_and_then_to_json_with_geometries(shapefile, target_file):
     graph = Graph.from_file(shapefile)
-    
+
     nx_graph = graph.get_nx_graph()
 
     # Even the geometry column is copied to the graph
@@ -278,17 +279,18 @@ def test_can_ignore_errors_while_making_graph(shapefile):
 
 def test_data_and_geometry(gdf_with_data):
     df = gdf_with_data
-    graph = Graph.from_geodataframe(df, cols_to_add=["data","data2"])
+    graph = Graph.from_geodataframe(df, cols_to_add=["data", "data2"])
     assert graph.geometry is df.geometry
-    #graph.add_data(df[["data"]])
+    # graph.add_data(df[["data"]])
     assert (graph.data["data"] == df["data"]).all()
-    #graph.add_data(df[["data2"]])
+    # graph.add_data(df[["data2"]])
     assert list(graph.data.columns) == ["data", "data2"]
 
 
 def test_make_graph_from_dataframe_has_crs(gdf_with_data):
     graph = Graph.from_geodataframe(gdf_with_data)
     assert CRS.from_json(graph.graph["crs"]).equals(gdf_with_data.crs)
+
 
 def test_make_graph_from_shapefile_has_crs(shapefile):
     graph = Graph.from_file(shapefile)

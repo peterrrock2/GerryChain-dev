@@ -4,7 +4,7 @@
 #      use of their fixtures.  It should eventually evolve into
 #      a reasonable test of additional functions added by me
 #      to gerrychain.graph
-#       
+#
 ################################################################
 
 import pathlib
@@ -12,15 +12,14 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 import geopandas as gp
+import networkx
 import pandas
 import pytest
-from shapely.geometry import Polygon
 from pyproj import CRS
+from shapely.geometry import Polygon
 
 from gerrychain.graph import Graph
 from gerrychain.graph.geo import GeometryError
-
-import networkx
 
 
 @pytest.fixture
@@ -235,7 +234,7 @@ def test_from_file_and_then_to_json_with_geometries(shapefile, target_file):
     # Even the geometry column is copied to the graph
     assert all("geometry" in node_data for node_data in all_node_data)
 
-    # frm: ???  Does anything check that the file is actually written? 
+    # frm: ???  Does anything check that the file is actually written?
     graph.to_json(target_file, include_geometries_as_geojson=True)
 
 
@@ -270,11 +269,11 @@ def test_can_ignore_errors_while_making_graph(shapefile):
 
 def test_data_and_geometry(gdf_with_data):
     df = gdf_with_data
-    graph = Graph.from_geodataframe(df, cols_to_add=["data","data2"])
+    graph = Graph.from_geodataframe(df, cols_to_add=["data", "data2"])
     assert graph.geometry is df.geometry
-    #graph.add_data(df[["data"]])
+    # graph.add_data(df[["data"]])
     assert (graph.data["data"] == df["data"]).all()
-    #graph.add_data(df[["data2"]])
+    # graph.add_data(df[["data2"]])
     assert list(graph.data.columns) == ["data", "data2"]
 
 
@@ -282,10 +281,8 @@ def test_make_graph_from_dataframe_has_crs(gdf_with_data):
     graph = Graph.from_geodataframe(gdf_with_data)
     assert CRS.from_json(graph.graph["crs"]).equals(gdf_with_data.crs)
 
+
 def test_make_graph_from_shapefile_has_crs(shapefile):
     graph = Graph.from_file(shapefile)
     df = gp.read_file(shapefile)
     assert CRS.from_json(graph.graph["crs"]).equals(df.crs)
-
-
-

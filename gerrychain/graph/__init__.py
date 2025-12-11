@@ -1,7 +1,7 @@
 """
 This module provides a :class:`~gerrychain.graph.Graph` class that
 extends the :class:`networkx.Graph` and includes some useful methods
-for working with graphs representing geographic data. The class 
+for working with graphs representing geographic data. The class
 :class:`~gerrychain.graph.Graph` is the only part of this module that
 is intended to be used directly by users of GerryChain.
 

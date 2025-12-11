@@ -1,7 +1,6 @@
-from ..partition import Partition
 import math
 
-
+from ..partition import Partition
 from .bounds import SelfConfiguringLowerBound, SelfConfiguringUpperBound
 
 

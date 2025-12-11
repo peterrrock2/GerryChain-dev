@@ -3,8 +3,9 @@ Updaters that compute spanning tree statistics.
 """
 
 import math
-import numpy
 from typing import Dict
+
+import numpy
 
 
 def _num_spanning_trees_in_district(partition, district: int) -> int:
@@ -23,7 +24,6 @@ def _num_spanning_trees_in_district(partition, district: int) -> int:
         partition corresponding to district
     :rtype: int
     """
-    graph = partition.subgraphs[district]
     laplacian = partition.graph.laplacian_matrix()
     L = numpy.delete(numpy.delete(laplacian.todense(), 0, 0), 1, 1)
     return math.exp(numpy.linalg.slogdet(L)[1])

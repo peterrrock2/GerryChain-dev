@@ -1,11 +1,13 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from gerrychain.metrics import (
     efficiency_gap,
-    wasted_votes,
     mean_median,
     partisan_bias,
     partisan_gini,
+    wasted_votes,
 )
 from gerrychain.updaters.election import ElectionResults
 
@@ -56,7 +58,7 @@ def test_mean_median_has_right_value(mock_election):
 
 
 def test_signed_partisan_scores_are_positive_if_first_party_has_advantage(
-    mock_election
+    mock_election,
 ):
     eg = efficiency_gap(mock_election)
     mm = mean_median(mock_election)

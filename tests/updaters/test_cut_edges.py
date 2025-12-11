@@ -1,4 +1,5 @@
 import functools
+import random
 
 import pytest
 
@@ -7,7 +8,6 @@ from gerrychain.accept import always_accept
 from gerrychain.constraints import no_vanishing_districts, single_flip_contiguous
 from gerrychain.grid import Grid
 from gerrychain.updaters import cut_edges, cut_edges_by_part
-import random
 
 random.seed(2018)
 
@@ -27,13 +27,17 @@ def invalid_cut_edges(partition):
     ]
     return invalid
 
+
 def translate_flips_to_internal_node_ids(partition, flips):
     # Translate flips into the internal_node_ids for the partition
     internal_flips = {}
     for original_nx_node_id, part in flips.items():
-        internal_node_id = partition.graph.internal_node_id_for_original_nx_node_id(original_nx_node_id)
+        internal_node_id = partition.graph.internal_node_id_for_original_nx_node_id(
+            original_nx_node_id
+        )
         internal_flips[internal_node_id] = part
     return internal_flips
+
 
 def test_cut_edges_doesnt_duplicate_edges_with_different_order_of_nodes(
     three_by_three_grid,
@@ -73,7 +77,9 @@ def test_cut_edges_can_handle_multiple_flips(three_by_three_grid):
     result = new_partition["cut_edges"]
 
     naive_cut_edges = {
-        tuple(sorted(edge)) for edge in partition.graph.edges if new_partition.crosses_parts(edge)
+        tuple(sorted(edge))
+        for edge in partition.graph.edges
+        if new_partition.crosses_parts(edge)
     }
 
     assert result == naive_cut_edges
@@ -118,7 +124,9 @@ def test_cut_edges_by_part_gives_same_total_edges_as_naive_method(three_by_three
 
     result = new_partition["cut_edges_by_part"]
     naive_cut_edges = {
-        tuple(sorted(edge)) for edge in partition.graph.edges if new_partition.crosses_parts(edge)
+        tuple(sorted(edge))
+        for edge in partition.graph.edges
+        if new_partition.crosses_parts(edge)
     }
 
     assert naive_cut_edges == {

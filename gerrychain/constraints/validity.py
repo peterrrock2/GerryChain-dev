@@ -1,8 +1,10 @@
+from typing import Callable, Dict, List
+
+import numpy
+
+from ..partition import Partition
 from ..updaters import CountySplit
 from .bounds import Bounds
-import numpy
-from typing import Callable, List, Dict
-from ..partition import Partition
 
 
 class Validator:

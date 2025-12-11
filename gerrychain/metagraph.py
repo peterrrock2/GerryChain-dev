@@ -12,9 +12,11 @@ Last Updated: 11 Jan 2024
 """
 
 from itertools import product
-from .constraints import Validator
-from typing import Callable, Dict, Iterator, Iterable, Union
+from typing import Callable, Dict, Iterable, Iterator, Union
+
 from gerrychain.partition import Partition
+
+from .constraints import Validator
 
 
 def all_cut_edge_flips(partition: Partition) -> Iterator[Dict]:
@@ -22,12 +24,12 @@ def all_cut_edge_flips(partition: Partition) -> Iterator[Dict]:
     Generate all possible flips of cut edges in a partition
     without any constraints.
 
-    This routine finds all edges on the boundary of 
-    districts - those that are "cut edges" where one node 
-    is in one district and the other node is in another 
-    district.  These are all of the places where you 
+    This routine finds all edges on the boundary of
+    districts - those that are "cut edges" where one node
+    is in one district and the other node is in another
+    district.  These are all of the places where you
     could move the boundary between districts by moving a single
-    node.  
+    node.
 
     :param partition: The partition object.
     :type partition: Partition

@@ -1,7 +1,7 @@
 import collections
 from typing import Dict, List, Set, Tuple
-from .flows import on_edge_flow, neighbor_flips
 
+from .flows import neighbor_flips, on_edge_flow
 
 
 def _put_edges_into_parts(cut_edges: List, assignment: Dict) -> Dict:
@@ -24,6 +24,7 @@ def _put_edges_into_parts(cut_edges: List, assignment: Dict) -> Dict:
         by_part[assignment.mapping[edge[0]]].add(edge)
         by_part[assignment.mapping[edge[1]]].add(edge)
     return by_part
+
 
 def _new_cuts(partition) -> Set[Tuple]:
     """
@@ -55,6 +56,7 @@ def _obsolete_cuts(partition) -> Set[Tuple]:
         and not partition.crosses_parts((node, neighbor))
     }
 
+
 def initialize_cut_edges(partition):
     """
     :param partition: A partition of a Graph
@@ -64,11 +66,12 @@ def initialize_cut_edges(partition):
                 two different parts (districts).  They are the internal boundaries
                 between parts (districts).  This routine finds all of the cut_edges
                 in the graph and then creates a dict that stores all of the cut_edges
-                for each part (district).  This dict becomes the value of 
+                for each part (district).  This dict becomes the value of
                 partition["cut_edges"].
 
-                Peter agreed: 
-                    Ah, you are correct. It maps parts to cut edges, not just any edges in the partition
+                Peter agreed:
+                    Ah, you are correct. It maps parts to cut edges, not just any edges in the
+                    partition
 
 
 
@@ -77,7 +80,7 @@ def initialize_cut_edges(partition):
     :rtype: Dict
     """
     # Compute the set of edges that are "cut_edges" - that is, edges that go from
-    # one part (district) to another. 
+    # one part (district) to another.
     cut_edges = {
         tuple(sorted(edge))
         # frm: edges vs edge_ids:  edges are wanted here (tuples)
@@ -93,8 +96,8 @@ def cut_edges_by_part(
 ) -> Set[Tuple]:
     #
     # frm TODO: Documentation: Update / expand the documentation for this routine.
-    # 
-    # This only operates on cut-edges and not on all of the 
+    #
+    # This only operates on cut-edges and not on all of the
     # edges in a partition.  A "cut-edge" is an edge that spans two districts.
     #
     """

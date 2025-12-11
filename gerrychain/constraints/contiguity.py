@@ -1,12 +1,11 @@
+import random
 from heapq import heappop, heappush
 from itertools import count
-
-from typing import Callable, Any, Dict, Set
-from ..partition import Partition
-import random
-from .bounds import SelfConfiguringLowerBound
+from typing import Any, Callable, Dict, Set
 
 from ..graph import Graph
+from ..partition import Partition
+from .bounds import SelfConfiguringLowerBound
 
 # frm: TODO: Performance: Think about the efficiency of the routines in this module.  Almost all
 #               of these involve traversing the entire graph, and I fear that callers
@@ -15,24 +14,26 @@ from ..graph import Graph
 #               Possible solutions are to 1) speed up these routines somehow and 2) cache
 #               results so that at least we don't do the traversals over and over.
 
-# frm: TODO: Refactoring: Rethink WTF this module is all about.  
-# 
+# frm: TODO: Refactoring: Rethink WTF this module is all about.
+#
 # It seems like a grab bag for lots of different things - used in different places.
-# 
-# What got me to write this comment was looking at the signature for def contiguous() 
+#
+# What got me to write this comment was looking at the signature for def contiguous()
 # which operates on a partition, but lots of other routines here operate on graphs or
 # other things.  So, what is going on?
 #
 # Peter replied to this comment in a pull request:
 #
-#     So anything that is prefixed with an underscore in here should be a helper 
-#     function and not a part of the public API. It looks like, other than 
-#     is_connected_bfs (which should probably be marked "private" with an 
+#     So anything that is prefixed with an underscore in here should be a helper
+#     function and not a part of the public API. It looks like, other than
+#     is_connected_bfs (which should probably be marked "private" with an
 #     underscore) everything here is acting like an updater.
 #
 
 
-def _are_reachable(graph: Graph, start_node: Any, avoid: Callable, targets: Any) -> bool:
+def _are_reachable(
+    graph: Graph, start_node: Any, avoid: Callable, targets: Any
+) -> bool:
     """
     A modified version of NetworkX's function
     `networkx.algorithms.shortest_paths.weighted._dijkstra_multisource()`
@@ -80,7 +81,6 @@ def _are_reachable(graph: Graph, start_node: Any, avoid: Callable, targets: Any)
     seen[start_node] = 0
     push(fringe, (0, next(c), start_node))
 
-    
     # frm: Original Code:
     #
     # while not all(t in seen for t in targets) and fringe:
@@ -91,18 +91,16 @@ def _are_reachable(graph: Graph, start_node: Any, avoid: Callable, targets: Any)
     #     for u, e in G_succ[v].items():
     #         if avoid(v, u, e):
     #             continue
-    # 
+    #
     #         vu_dist = dist[v] + 1
     #         if u not in seen or vu_dist < seen[u]:
     #             seen[u] = vu_dist
     #             push(fringe, (vu_dist, next(c), u))
-    # 
+    #
     # return all(t in seen for t in targets)
     #
 
-
-
-    # While we have not yet seen all of our targets and while there is 
+    # While we have not yet seen all of our targets and while there is
     # still some fringe...
     while not all(tgt in seen for tgt in targets) and fringe:
         (distance, _, node_id) = pop(fringe)
@@ -120,10 +118,11 @@ def _are_reachable(graph: Graph, start_node: Any, avoid: Callable, targets: Any)
                 push(fringe, (neighbor_distance, next(c), neighbor))
 
     # frm: TODO: Refactoring:  Simplify this code.  It computes distances and counts but
-    #               never uses them.  These must be relics of code copied 
+    #               never uses them.  These must be relics of code copied
     #               from somewhere else where it had more uses...
 
     return all(tgt in seen for tgt in targets)
+
 
 def single_flip_contiguous(partition: Partition) -> bool:
     """
@@ -188,7 +187,7 @@ def single_flip_contiguous(partition: Partition) -> bool:
         start_neighbor = random.choice(old_neighbors)
 
         # Check if all old neighbors in the same assignment are still reachable.
-        # The "_partition_edge_avoid" function will prevent searching across 
+        # The "_partition_edge_avoid" function will prevent searching across
         # a part (district) boundary
         connected = _are_reachable(
             graph, start_neighbor, _partition_edge_avoid, old_neighbors
@@ -232,7 +231,7 @@ def _affected_parts(partition: Partition) -> Set[int]:
 
 def contiguous(partition: Partition) -> bool:
     """
-    Check if the parts of a partition are connected 
+    Check if the parts of a partition are connected
 
     :param partition: The proposed next :class:`~gerrychain.partition.Partition`
     :type partition: Partition
@@ -242,8 +241,10 @@ def contiguous(partition: Partition) -> bool:
     """
 
     return all(
-        is_connected_bfs(partition.subgraphs[part]) for part in _affected_parts(partition)
+        is_connected_bfs(partition.subgraphs[part])
+        for part in _affected_parts(partition)
     )
+
 
 def contiguous_bfs(partition: Partition) -> bool:
     """
@@ -256,36 +257,37 @@ def contiguous_bfs(partition: Partition) -> bool:
     :returns: Whether the parts of this partition are connected
     :rtype: bool
     """
-    
-    # frm: TODO: Refactoring:  Figure out why this routine, contiguous_bfs() exists.  
+
+    # frm: TODO: Refactoring:  Figure out why this routine, contiguous_bfs() exists.
     #
     # It is mentioned in __init__.py so maybe it is used externally in legacy code.
     #
     # However, I have changed the code so that it just calls contiguous() and all
-    # of the tests pass, so I am going to assume that my comment below is accurate, 
+    # of the tests pass, so I am going to assume that my comment below is accurate,
     # that is, I am assuming that this function does not need to exist independently
-    # except for legacy purposes.  Stated differently, if someone can verify that 
+    # except for legacy purposes.  Stated differently, if someone can verify that
     # this routine is NOT needed for legacy purposes, then we can just delete it.
-    # 
-    # It seems to be exactly the same conceptually as contiguous().  It looks 
+    #
+    # It seems to be exactly the same conceptually as contiguous().  It looks
     # at the "affected" parts - those that have changed node
-    # assignments from parent, and sees if those parts are 
+    # assignments from parent, and sees if those parts are
     # contiguous.
     #
-    # frm: Original Code: 
+    # frm: Original Code:
     #
     #    parts_to_check = _affected_parts(partition)
-    #    
+    #
     #    # Generates a subgraph for each district and perform a BFS on it
     #    # to check connectedness.
     #    for part in parts_to_check:
     #        adj = nx.to_dict_of_lists(partition.subgraphs[part])
     #        if _bfs(adj) is False:
     #            return False
-    #    
+    #
     #    return True
 
     return contiguous(partition)
+
 
 def number_of_contiguous_parts(partition: Partition) -> int:
     """
@@ -327,7 +329,7 @@ def contiguous_components(partition: Partition) -> Dict[int, list]:
     # The issue is not that the code is incorrect (with RX there is really no other
     # option), but rather that any legacy code will be unprepared to deal with the fact
     # that the subgraphs returned are (I think) three node translations away from the
-    # original NX-Graph object's node_ids. 
+    # original NX-Graph object's node_ids.
     #
     # Translations:
     #
@@ -343,6 +345,7 @@ def contiguous_components(partition: Partition) -> Dict[int, list]:
         connected_components_in_each_partition[part] = list_of_connected_subgraphs
 
     return connected_components_in_each_partition
+
 
 def _bfs(graph: Dict[int, list]) -> bool:
     """
@@ -376,9 +379,11 @@ def _bfs(graph: Dict[int, list]) -> bool:
 
     return num_nodes == len(visited)
 
+
 # frm: TODO: Testing:  Verify that is_connected_bfs() works - add a test or two...
 
 # frm: TODO: Refactoring:  Move this code into graph.py.  It is all about the Graph...
+
 
 # frm: TODO: Documentation: This code was obtained from the web - probably could be optimized...
 #       This code replaced calls on nx.is_connected()

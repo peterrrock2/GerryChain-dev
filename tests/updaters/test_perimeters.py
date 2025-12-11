@@ -36,11 +36,11 @@ def test_interior_perimeter_handles_flips_with_a_simple_grid():
 
 def test_cut_edges_by_part_handles_flips_with_a_simple_grid():
 
-    # frm: TODO: Testing:  Add a graphic here 
-    # 
+    # frm: TODO: Testing:  Add a graphic here
+    #
     # That will allow the person reading this code to make sense
     # of what it does...
-    #             
+    #
     grid, flipped_grid = setup()
 
     result = flipped_grid["cut_edges_by_part"]
@@ -51,8 +51,8 @@ def test_cut_edges_by_part_handles_flips_with_a_simple_grid():
         new_set_of_edges = set()
         for edge in set_of_edges:
             new_edge = (
-              flipped_grid.graph.original_nx_node_id_for_internal_node_id(edge[0]),
-              flipped_grid.graph.original_nx_node_id_for_internal_node_id(edge[1]),
+                flipped_grid.graph.original_nx_node_id_for_internal_node_id(edge[0]),
+                flipped_grid.graph.original_nx_node_id_for_internal_node_id(edge[1]),
             )
             new_set_of_edges.add(new_edge)
         new_result[part] = new_set_of_edges
@@ -135,7 +135,7 @@ def test_perimeter_match_naive_perimeter_at_every_step():
         for edge in cut_edges:
             for node in edge:
                 interior[partition.assignment[node]] += partition.graph.edge_data(
-                  partition.graph.get_edge_id_from_edge(edge)
+                    partition.graph.get_edge_id_from_edge(edge)
                 )["shared_perim"]
         return interior
 
@@ -151,4 +151,3 @@ def test_perimeter_match_naive_perimeter_at_every_step():
     for state in chain:
         expected = expected_perimeter(state)
         assert expected == state["perimeter"]
-

@@ -1,8 +1,9 @@
+from collections.abc import Mapping
+
 import pandas
 import pytest
 
 from gerrychain.partition.assignment import Assignment, get_assignment
-from collections.abc import Mapping
 
 
 @pytest.fixture
@@ -12,7 +13,9 @@ def assignment():
 
 class TestAssignment:
     def test_assignment_can_be_updated(self, assignment):
-        assignment.update_flows({1: {"out": set(), "in": {2}}, 2: {"out": {2}, "in": set()}})
+        assignment.update_flows(
+            {1: {"out": set(), "in": {2}}, 2: {"out": {2}, "in": set()}}
+        )
         assert assignment[2] == 1
 
     def test_assignment_copy_does_not_copy_the_node_sets(self, assignment):

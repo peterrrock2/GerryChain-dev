@@ -1,46 +1,37 @@
+import pytest
 import random
 
-random.seed(2018)
-import pytest
-from functools import partial
 from concurrent.futures import ProcessPoolExecutor
+from functools import partial
+
+from gerrychain.tree import BipartitionWarning
 from gerrychain import (
+    Graph,
     MarkovChain,
     Partition,
     accept,
     constraints,
     proposals,
-    updaters,
-    Graph,
     tree,
+    updaters as gc_updaters,
 )
-from gerrychain.tree import ReselectException, BipartitionWarning
+
+random.seed(2018)
 
 
 def run_chain_single(
     seed, category, steps, surcharge, max_attempts=100000, reselect=False
 ):
-    from gerrychain import (
-        MarkovChain,
-        Partition,
-        accept,
-        constraints,
-        proposals,
-        updaters,
-        Graph,
-        tree,
-    )
-    from gerrychain.tree import ReselectException
-    from functools import partial
     import random
+    from functools import partial
 
     graph = Graph.from_json("tests/graphs_for_test/8x8_with_muni.json")
     population_col = "TOTPOP"
 
     updaters = {
-        "population": updaters.Tally(population_col, alias="population"),
-        "cut_edges": updaters.cut_edges,
-        f"{category}_splits": updaters.tally_region_splits([category]),
+        "population": gc_updaters.Tally(population_col, alias="population"),
+        "cut_edges": gc_updaters.cut_edges,
+        f"{category}_splits": gc_updaters.tally_region_splits([category]),
     }
     initial_partition = Partition(graph, assignment="district", updaters=updaters)
 
@@ -173,29 +164,16 @@ def straddled_regions(partition, reg_attr, all_reg_names):
 def run_chain_dual(
     seed, steps, surcharges={"muni": 0.5, "county": 0.5}, warn_attempts=1000
 ):
-    from gerrychain import (
-        MarkovChain,
-        Partition,
-        accept,
-        constraints,
-        proposals,
-        updaters,
-        Graph,
-        tree,
-    )
-    from functools import partial
     import random
+    from functools import partial
 
     graph = Graph.from_json("tests/graphs_for_test/8x8_with_muni.json")
     population_col = "TOTPOP"
 
-    muni_names = [str(i) for i in range(1, 17)]
-    county_names = [str(i) for i in range(1, 5)]
-
     updaters = {
-        "population": updaters.Tally(population_col, alias="population"),
-        "cut_edges": updaters.cut_edges,
-        "splits": updaters.tally_region_splits(["muni", "county"]),
+        "population": gc_updaters.Tally(population_col, alias="population"),
+        "cut_edges": gc_updaters.cut_edges,
+        "splits": gc_updaters.tally_region_splits(["muni", "county"]),
     }
     initial_partition = Partition(graph, assignment="district", updaters=updaters)
 

@@ -1,10 +1,12 @@
+import math
+import random
+from typing import Any, Callable, List, Union
+
+from tqdm import tqdm
+
+from ..accept import always_accept
 from ..chain import MarkovChain
 from ..partition import Partition
-from ..accept import always_accept
-import random
-from typing import Union, Callable, List, Any
-from tqdm import tqdm
-import math
 
 
 class SingleMetricOptimizer:
@@ -40,17 +42,16 @@ class SingleMetricOptimizer:
         step_indexer: str = "step",
     ):
         """
-
         :param proposal: Function proposing the next state from the current state.
         :type proposal: Callable
-        :param constraints: A function, or lists of functions, determining whether the proposed next
-            state is valid (passes all binary constraints). Usually this is a
+        :param constraints: A function, or lists of functions, determining whether the proposed
+            next state is valid (passes all binary constraints). Usually this is a
             :class:`~gerrychain.constraints.Validator` class instance.
         :type constraints: Union[Callable[[Partition], bool], List[Callable[[Partition], bool]]]
         :param initial_state: Initial state of the optimizer.
         :type initial_state: Partition
-        :param optimization_metric: The score function with which to optimize over. This should have
-            the signature: ``Partition -> 'a`` where 'a is comparable.
+        :param optimization_metric: The score function with which to optimize over. This should
+            have the signature: ``Partition -> 'a`` where 'a is comparable.
         :type optimization_metric: Callable[[Partition], Any]
         :param maximize: Boolean indicating whether to maximize or minimize the function.
             Defaults to True for maximize.
@@ -74,9 +75,10 @@ class SingleMetricOptimizer:
         self._step_indexer = step_indexer
 
         if self._step_indexer not in self._initial_part.updaters:
-            step_updater = lambda p: (
-                0 if p.parent is None else p.parent[self._step_indexer] + 1
-            )
+
+            def step_updater(p: Partition) -> int:
+                return 0 if p.parent is None else p.parent[self._step_indexer] + 1
+
             self._initial_part.updaters[self._step_indexer] = step_updater
 
     @property
@@ -189,8 +191,8 @@ class SingleMetricOptimizer:
     ) -> Callable[[int], float]:
         """
         Class method that binds and return simple hot-cold cycle beta temperature function, where
-        the chain runs hot for some given duration and then cold for some duration, and repeats that
-        cycle.
+        the chain runs hot for some given duration and then cold for some duration, and repeats
+        that cycle.
 
         :param duration_hot: Number of steps to run chain hot.
         :type duration_hot: int
@@ -303,7 +305,8 @@ class SingleMetricOptimizer:
         cycle_length = duration_hot + 2 * duration_cooldown + duration_cold
 
         # this will scale from 0 to 1 approximately
-        logit = lambda x: (math.log(x / (1 - x)) + 5) / 10
+        def logit(x):
+            return (math.log(x / (1 - x)) + 5) / 10
 
         def beta_function(step: int):
             time_in_cycle = step % cycle_length
@@ -355,7 +358,8 @@ class SingleMetricOptimizer:
         cycle_length = duration_hot + duration_cooldown + duration_cold
 
         # this will scale from 0 to 1 approximately
-        logit = lambda x: (math.log(x / (1 - x)) + 5) / 10
+        def logit(x):
+            return (math.log(x / (1 - x)) + 5) / 10
 
         def beta_function(step: int):
             time_in_cycle = step % cycle_length

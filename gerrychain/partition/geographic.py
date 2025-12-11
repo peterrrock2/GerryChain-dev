@@ -1,4 +1,3 @@
-from gerrychain.partition import Partition
 from gerrychain.updaters import (
     Tally,
     boundary_nodes,
@@ -8,6 +7,7 @@ from gerrychain.updaters import (
     interior_boundaries,
     perimeter,
 )
+from .partition import Partition
 
 
 class GeographicPartition(Partition):

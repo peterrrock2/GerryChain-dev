@@ -1,5 +1,5 @@
 import json
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 # frm:  Only used in _first_time() inside __init__() to allow for creating
 #       a Partition from a NetworkX Graph object:
@@ -7,27 +7,28 @@ import json
 #           elif isinstance(graph, networkx.Graph):
 #               graph = Graph.from_networkx(graph)
 #               self.graph = FrozenGraph(graph)
-import networkx     
+import networkx
 
 from gerrychain.graph.graph import FrozenGraph, Graph
-from ..updaters import compute_edge_flows, flows_from_changes, cut_edges
+
+from ..tree import recursive_tree_part
+from ..updaters import compute_edge_flows, cut_edges, flows_from_changes
 from .assignment import get_assignment
 from .subgraphs import SubgraphView
-from ..tree import recursive_tree_part
-from typing import Any, Callable, Dict, Optional, Tuple
 
 # frm TODO: Documentation:     Add documentation about how this all works.  For instance,
 #               what is computationally expensive and how does a FrozenGraph
-#               help?  Why do we need both assignments and parts?  
+#               help?  Why do we need both assignments and parts?
 #
 #               Since a Partition is intimately tied up with how the Markov Chain
 #               does its magic, it would make sense to talk about that a bit...
 #
-#               For instance, is there any reason to use a Partition object 
+#               For instance, is there any reason to use a Partition object
 #               except in a Markov Chain?  I suppose they are useful for post
-#               Markov Chain analysis - but if so, then it would be nice to 
+#               Markov Chain analysis - but if so, then it would be nice to
 #               know what functionality is tuned for the Markov Chain and what
 #               functionality / data is tuned for post Markov Chain analysis.
+
 
 class Partition:
     """
@@ -76,24 +77,24 @@ class Partition:
             which the functions compute.
         :param use_default_updaters: If `False`, do not include default updaters.
         """
-        
+
         if parent is None:
             if graph is None:
                 raise Exception("Parition.__init__(): graph object is None")
-                
+
             self._first_time(graph, assignment, updaters, use_default_updaters)
         else:
             self._from_parent(parent, flips)
 
         self._cache = dict()
-        
-        #frm:   SubgraphView provides cached access to subgraphs for each of the 
+
+        # frm:   SubgraphView provides cached access to subgraphs for each of the
         #       partition's districts.  It is important that we asign subgraphs AFTER
         #       we have established what nodes belong to which parts (districts).  In
         #       the case when the parent is None, the assignments are explicitly provided,
         #       and in the case when there is a parent, the _from_parent() logic processes
         #       the flips to update the assignments.
-        
+
         self.subgraphs = SubgraphView(self.graph, self.parts)
 
     @classmethod
@@ -105,7 +106,6 @@ class Partition:
         pop_col: str,
         updaters: Optional[Dict[str, Callable]] = None,
         use_default_updaters: bool = True,
-        flips: Optional[Dict] = None,
         method: Callable = recursive_tree_part,
     ) -> "Partition":
         """
@@ -124,8 +124,6 @@ class Partition:
         :type updaters: Optional[Dict[str, Callable]], optional
         :param use_default_updaters: If `False`, do not include default updaters.
         :type use_default_updaters: bool, optional
-        :param flips: Dictionary assigning nodes of the graph to their new districts.
-        :type flips: Optional[Dict], optional
         :param method: The function to use to partition the graph into ``n_parts``. Defaults to
             :func:`~gerrychain.tree.recursive_tree_part`.
         :type method: Callable, optional
@@ -162,7 +160,7 @@ class Partition:
         # when we create a Partition object.
         #
         # Creating and manipulating NX Graphs is easy and users
-        # are familiar with doing so.  It makes sense to preserve the use case of 
+        # are familiar with doing so.  It makes sense to preserve the use case of
         # creating an NX-Graph and then allowing the code to under-the-covers
         # convert to RX - both for legacy compatibility, but also because NX provides
         # a really nice and easy way to create graphs.
@@ -181,7 +179,7 @@ class Partition:
             # frm: TODO: Performance: Remove this short-term hack to do performance testing
             #
             # This "test_performance_using_NX_graph" hack just forces the partition
-            # to NOT convert the NX graph to be RX based.  This allows me to 
+            # to NOT convert the NX graph to be RX based.  This allows me to
             # compare RX performance to NX performance with the same code - so that
             # whatever is different is crystal clear.
             test_performance_using_NX_graph = False
@@ -191,7 +189,7 @@ class Partition:
                 print("Performance-Test: using NetworkX for Partition object")
                 print("=====================================================")
 
-            elif (graph.is_nx_graph()):
+            elif graph.is_nx_graph():
 
                 # Get the assignment that would be appropriate for the NX-based graph
                 old_nx_assignment = get_assignment(assignment, graph)
@@ -202,10 +200,10 @@ class Partition:
                 # After converting from NX to RX, we need to update the Partition's assignment
                 # because it used the old NX node_ids (converting to RX changes node_ids)
                 nx_to_rx_node_id_map = graph.get_nx_to_rx_node_id_map()
-                new_rx_assignment = old_nx_assignment.new_assignment_convert_old_node_ids_to_new_node_ids(
-                  nx_to_rx_node_id_map
+                rx_assign = old_nx_assignment.new_assignment_convert_old_node_ids_to_new_node_ids(
+                    nx_to_rx_node_id_map
                 )
-                self.assignment = new_rx_assignment
+                self.assignment = rx_assign
 
             else:
                 self.assignment = get_assignment(assignment, graph)
@@ -245,10 +243,10 @@ class Partition:
 
     # frm ???:      This is only called once and it is tagged as an internal
     #               function (leading underscore).  Is there a good reason
-    #               why this is not internal to the __init__() routine 
+    #               why this is not internal to the __init__() routine
     #               where it is used?
     #
-    #               That is, is there any reason why anyone might ever 
+    #               That is, is there any reason why anyone might ever
     #               call this except __init__()?
 
     def _from_parent(self, parent: "Partition", flips: Dict) -> None:
@@ -284,25 +282,28 @@ class Partition:
         :rtype: Partition
         """
 
-        # frm: TODO: Documentation: Change comments above to document new optional parameter, use_original_nx_node_ids.
+        # frm: TODO: Documentation: Change comments above to document new optional parameter,
+        # use_original_nx_node_ids.
         #
-        # This is a new issue that arises from the fact that node_ids in RX are different from those
-        # in the original NX graph.  In the pre-RX code, we did not need to distinguish between
-        # calls to flip() that were internal code used when doing a MarkovChain versus user code
-        # for instance in tests.  However, in the new RX world, the internal code uses RX node_ids
-        # and the tests want to use "original" NX node_ids.  Hence the new parameter.
+        # This is a new issue that arises from the fact that node_ids in RX are different from
+        # those in the original NX graph.  In the pre-RX code, we did not need to distinguish
+        # between calls to flip() that were internal code used when doing a MarkovChain versus
+        # user code for instance in tests.  However, in the new RX world, the internal code uses
+        # RX node_ids and the tests want to use "original" NX node_ids.  Hence the new parameter.
 
-        # If the caller identified flips in terms of "original" node_ids (typically node_ids associated with 
-        # an NX-based graph before creating a Partition object), then translate those original node_ids 
-        # into the appropriate internal RX-based node_ids.
-        # 
+        # If the caller identified flips in terms of "original" node_ids (typically node_ids
+        # associated with an NX-based graph before creating a Partition object), then translate
+        # those original node_ids into the appropriate internal RX-based node_ids.
+        #
         # Note that original node_ids in flips are typically used in tests
         #
 
         if use_original_nx_node_ids:
             new_flips = {}
             for original_nx_node_id, part in flips.items():
-                internal_node_id = self.graph.internal_node_id_for_original_nx_node_id(original_nx_node_id)
+                internal_node_id = self.graph.internal_node_id_for_original_nx_node_id(
+                    original_nx_node_id
+                )
                 new_flips[internal_node_id] = part
             flips = new_flips
 
@@ -330,7 +331,7 @@ class Partition:
         :rtype: Any
         """
         # frm: Cleverness Alert:  Delayed evaluation of updater functions...
-        #                           
+        #
         #   The code immediately below executes the appropriate updater function
         #   if it has not already been executed and then caches the results.
         #   This makes sense - why compute something if nobody ever wants it,
@@ -341,19 +342,22 @@ class Partition:
         if key not in self._cache:
             # frm: TODO: Testing:  Add a test checking what happens if no updater defined
             #
-            # This code checks that the desired updater actually is 
-            # defined in the list of updaters.  If not, then this 
+            # This code checks that the desired updater actually is
+            # defined in the list of updaters.  If not, then this
             # would produce a perhaps difficult to debug problem...
             if key not in self.updaters:
-                raise KeyError(f"__getitem__(): updater: {key} not defined in the updaters for the partition")
+                raise KeyError(
+                    f"__getitem__(): updater: {key} not defined in the updaters for the partition"
+                )
 
             self._cache[key] = self.updaters[key](self)
         return self._cache[key]
 
     def __getattr__(self, key):
-        # frm TODO: Refactor:  Not sure it makes sense to allow two ways to accomplish the same thing...
+        # frm TODO: Refactor:  Not sure it makes sense to allow two ways to accomplish the same
+        # thing...
         #
-        # The code below allows Partition users to get the results of updaters by just 
+        # The code below allows Partition users to get the results of updaters by just
         # doing:  partition.<updater_name>  which is the same as doing: partition["<updater_name>"]
         # It is clever, but perhaps too clever.  Why provide two ways to do the same thing?
         #
@@ -364,12 +368,12 @@ class Partition:
         #
         # Peter's comment in PR:
         #
-        # This is actually on my list of things that I would prefer removed. When I first 
-        # started working with this codebase, I found the fact that you could just do 
-        # partition.name_of_my_updater really confusing, and, from a Python perspective, 
-        # I think that the more intuitive interface is keyword access like in a dictionary. 
-        # I haven't scoured the codebase for instances of ".attr" yet, but this is one of 
-        # the things that I am 100% okay with getting rid of. Almost all of the people 
+        # This is actually on my list of things that I would prefer removed. When I first
+        # started working with this codebase, I found the fact that you could just do
+        # partition.name_of_my_updater really confusing, and, from a Python perspective,
+        # I think that the more intuitive interface is keyword access like in a dictionary.
+        # I haven't scoured the codebase for instances of ".attr" yet, but this is one of
+        # the things that I am 100% okay with getting rid of. Almost all of the people
         # that I have seen work with this package use the partition["attr"] paradigm anyway.
         #
         return self[key]
@@ -382,12 +386,12 @@ class Partition:
         return self.assignment.parts
 
     def plot(self, geometries=None, **kwargs):
-        # 
+        #
         # frm ???:  I think that this plots districts on a map that is defined
         #           by the geometries parameter (presumably polygons or something similar).
         #           It converts the partition data into data that the plot routine
         #           knows how to deal with, but essentially it just assigns each node
-        #           to a district.  the **kwargs are then passed to the plotting 
+        #           to a district.  the **kwargs are then passed to the plotting
         #           engine - presumably to define colors and other graph stuff.
         #
 
@@ -459,7 +463,9 @@ class Partition:
         id_column_key = districtr_plan["idColumn"]["key"]
         districtr_assignment = districtr_plan["assignment"]
         try:
-            node_to_id = {node: str(graph.node_data(node)[id_column_key]) for node in graph}
+            node_to_id = {
+                node: str(graph.node_data(node)[id_column_key]) for node in graph
+            }
         except KeyError:
             raise TypeError(
                 "The provided graph is missing the {} column, which is "
@@ -468,6 +474,9 @@ class Partition:
 
         # frm: TODO: Testing: Verify that there is a test for from_districtr_file()
 
-        assignment = {node_id: districtr_assignment[node_to_id[node_id]] for node_id in graph.node_indices}
+        assignment = {
+            node_id: districtr_assignment[node_to_id[node_id]]
+            for node_id in graph.node_indices
+        }
 
         return cls(graph, assignment, updaters)

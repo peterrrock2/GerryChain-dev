@@ -6,10 +6,12 @@ but cannot be given an explicit type annotation due to problems
 with circular imports.
 """
 
-import numpy
 from typing import Tuple
 
+import numpy
+
 # frm: TODO: Refactoring: Why are these not just included in the file that defines ElectionResults?
+
 
 def mean_median(election_results) -> float:
     """

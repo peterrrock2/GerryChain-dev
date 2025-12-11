@@ -1,11 +1,13 @@
+import random
+from functools import partial
+
+import numpy as np
+
 from gerrychain import Partition
-from gerrychain.optimization import SingleMetricOptimizer
 from gerrychain.constraints import contiguous
+from gerrychain.optimization import SingleMetricOptimizer
 from gerrychain.proposals import recom
 from gerrychain.updaters import Tally
-from functools import partial
-import numpy as np
-import random
 
 random.seed(2024)
 

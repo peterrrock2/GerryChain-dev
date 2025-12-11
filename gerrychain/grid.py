@@ -12,19 +12,14 @@ Dependencies:
 - typing: Used for type hints.
 """
 
-
 import math
-import networkx
-# frm TODO: Documentation: Clarify what purpose grid.py serves.  
-#
-# It is a convenience module to help users create toy graphs.  It leverages
-# NX to create graphs, but it returns new Graph objects.  So, legacy user
-# code will need to be at least reviewed to make sure that it properly 
-# copes with new Graph objects.
-# 
+from typing import Any, Callable, Dict, Optional, Tuple
 
-from gerrychain.partition import Partition
+import networkx
+
 from gerrychain.graph import Graph
+from gerrychain.metrics import polsby_popper
+from gerrychain.partition import Partition
 from gerrychain.updaters import (
     Tally,
     boundary_nodes,
@@ -34,8 +29,14 @@ from gerrychain.updaters import (
     interior_boundaries,
     perimeter,
 )
-from gerrychain.metrics import polsby_popper
-from typing import Callable, Dict, Optional, Tuple, Any
+
+# frm TODO: Documentation: Clarify what purpose grid.py serves.
+#
+# It is a convenience module to help users create toy graphs.  It leverages
+# NX to create graphs, but it returns new Graph objects.  So, legacy user
+# code will need to be at least reviewed to make sure that it properly
+# copes with new Graph objects.
+#
 
 
 class Grid(Partition):
@@ -76,11 +77,11 @@ class Grid(Partition):
         #                   to see if this is correct.  Note that flips is used in the constructor
         #                   so it should fall through to Partition._from_parent()...
         #
-        #                   OK - I think that this is a bug.  Parition._from_parent() assumes 
-        #                   that flips are a mapping from node to partition not tuple/edge to partition.
-        #                   I checked ALL of the code and the constructor for Grid is never passed in
-        #                   a flips parameter, so there is no example to check / verify, but it sure
-        #                   looks and smells like a bug.  
+        #                   OK - I think that this is a bug.  Parition._from_parent() assumes
+        #                   that flips are a mapping from node to partition not tuple/edge to
+        #                   partition. I checked ALL of the code and the constructor for Grid is
+        #                   never passed in a flips parameter, so there is no example to
+        #                   check / verify, but it sure looks and smells like a bug.
         #
         #                   The fix would be to just change Dict[Tuple[int, int], int] to be
         #                   Dict[int, int]
@@ -123,12 +124,15 @@ class Grid(Partition):
 
         if dimensions:
             self.dimensions = dimensions
-            graph = Graph.from_networkx(_create_grid_nx_graph(dimensions, with_diagonals))
+            graph = Graph.from_networkx(
+                _create_grid_nx_graph(dimensions, with_diagonals)
+            )
 
             if not assignment:
                 thresholds = tuple(math.floor(n / 2) for n in self.dimensions)
                 assignment = {
-                    node_id: color_quadrants(node_id, thresholds) for node_id in graph.node_indices  # type: ignore
+                    node_id: color_quadrants(node_id, thresholds)  # type: ignore
+                    for node_id in graph.node_indices
                 }
 
             if not updaters:
@@ -180,7 +184,8 @@ class Grid(Partition):
 #   * Document whatever we decide
 #
 
-def _create_grid_nx_graph(dimensions: Tuple[int, int], with_diagonals: bool) -> Graph:
+
+def _create_grid_nx_graph(dimensions: Tuple[int, ...], with_diagonals: bool) -> Graph:
     """
     Creates a grid graph with the specified dimensions.
     Optionally includes diagonal connections between nodes.
@@ -210,21 +215,22 @@ def _create_grid_nx_graph(dimensions: Tuple[int, int], with_diagonals: bool) -> 
             ((i, j + 1), (i + 1, j)) for i in range(m - 1) for j in range(n - 1)
         ]
         diagonal_edges = nw_to_se + sw_to_ne
-        #frm: TODO: Check that graph is an NX graph before calling graph.add_edges_from().  Eventually
-        #           make this work for RX too...
+        # frm: TODO: Check that graph is an NX graph before calling graph.add_edges_from().
+        #      Eventually make this work for RX too...
         nx_graph.add_edges_from(diagonal_edges)
         for edge in diagonal_edges:
             # frm: TODO:  When/if grid.py is converted to operate on GerryChain Graph
             #               objects instead of NX.Graph objects, this use of NX
             #               EdgeView to get/set edge data will need to change to use
             #               gerrychain_graph.edge_data()
-            #               
+            #
             #               We will also need to think about edge vs edge_id.  In this
             #               case we want an edge_id, so that means we need to look at
             #               how diagonal_edges are created - but that is for the future...
             nx_graph.edges[edge]["shared_perim"] = 0
 
-    # frm: These just set all nodes/edges in the graph to have the given attributes with a value of 1
+    # frm: These just set all nodes/edges in the graph to have the given attributes with a value
+    # of 1
     # frm: TODO: These won't work for the new graph, and they won't work for RX
     networkx.set_node_attributes(nx_graph, 1, "population")
     networkx.set_node_attributes(nx_graph, 1, "area")
@@ -234,7 +240,8 @@ def _create_grid_nx_graph(dimensions: Tuple[int, int], with_diagonals: bool) -> 
     return nx_graph
 
 
-# frm ???:  Why is this here instead of in graph.py?  Who is it intended for?  Internal vs. External?
+# frm ???:  Why is this here instead of in graph.py?  Who is it intended for?
+# Internal vs. External?
 def give_constant_attribute(graph: Graph, attribute: Any, value: Any) -> None:
     """
     Sets the specified attribute to the specified value for all nodes in the graph.
@@ -271,22 +278,24 @@ def _tag_boundary_nodes(nx_graph: networkx.Graph, dimensions: Tuple[int, int]) -
     #       is a tuple and not just a number or string.  The tuple indicates its
     #       position in the grid (x,y) cartesian coordinates, so node[0] below
     #       means its x-position and node[1] means its y-position.  So the if-stmt
-    #       below tests whether a node is all the way on the left or the right or 
+    #       below tests whether a node is all the way on the left or the right or
     #       all the way on the top or the bottom.  If so, it is tagged as a
     #       boundary node and it gets its boundary_perim value set - still not
     #       sure what that does/means...
-    # 
+    #
     # Peter's comment from PR:
     #
-    # I think that being able to identify a boundary edge was needed in some early 
-    # experiments, so it was important to tag them, but I haven't really something 
+    # I think that being able to identify a boundary edge was needed in some early
+    # experiments, so it was important to tag them, but I haven't really something
     # that cares about this in a while
 
     m, n = dimensions
     for node in nx_graph.nodes:
         if node[0] in [0, m - 1] or node[1] in [0, n - 1]:
             nx_graph.nodes[node]["boundary_node"] = True
-            nx_graph.nodes[node]["boundary_perim"] = get_boundary_perim(node, dimensions)
+            nx_graph.nodes[node]["boundary_perim"] = get_boundary_perim(
+                node, dimensions
+            )
         else:
             nx_graph.nodes[node]["boundary_node"] = False
 

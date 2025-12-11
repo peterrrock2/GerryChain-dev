@@ -1,10 +1,11 @@
 import collections
 import functools
-from typing import Dict, Set, Tuple, Callable
+from typing import Callable, Dict, Set, Tuple
 
 # frm: TODO: Documentation: This file needs documentation / comments!!!
 #
 # Peter agrees...
+
 
 @functools.lru_cache(maxsize=2)
 def neighbor_flips(partition) -> Set[Tuple]:
@@ -39,10 +40,10 @@ def flows_from_changes(old_partition, new_partition) -> Dict:
         `{'in': <set of nodes that flowed in>, 'out': <set of nodes that flowed out>}`.
     :rtype: Dict
     """
-    
+
     # frm: TODO: Code: ???:  Grok why there is a test for:  source != target
     #
-    # It would seem to me that it would be a logic bug if there 
+    # It would seem to me that it would be a logic bug if there
     # was a "flip" that did not in fact change the partition mapping...
     #
 
@@ -147,11 +148,11 @@ def compute_edge_flows(partition) -> Dict:
         #       and 3) the edge was a cut edge before and is still a cut edge after the flip,
         #       but the partition assignments to one or the other nodes in the edge changes.
         #
-        #       That is what the if-stmt below is doing - determining which of the three 
+        #       That is what the if-stmt below is doing - determining which of the three
         #       cases each flip falls into.  It updates the flows accordingly...
         #
-        cut = new_source != new_target          # after flip, the edge is a cut edge
-        was_cut = old_source != old_target      # before flip, the edge was a cut edge
+        cut = new_source != new_target  # after flip, the edge is a cut edge
+        was_cut = old_source != old_target  # before flip, the edge was a cut edge
 
         if not cut and was_cut:
             # was a cut edge before, but now is not, so flows out of both
@@ -167,12 +168,12 @@ def compute_edge_flows(partition) -> Dict:
             # frm: Clarification to myself...  Python set subtraction will delete
             #       from the set on the left any members of the set on the right,
             #       so no_longer_incident_parts will determine if either old_target,
-            #       or old_source has changed - that is, whether the assignment of 
+            #       or old_source has changed - that is, whether the assignment of
             #       the one of the old mappings has changed - if so, the edge has
             #       gone "out" of that partition.  If you do the subtraction the
             #       other way, you find whether the new mappings have changed
-            #       and you can then update the "in" flows  
-            #       
+            #       and you can then update the "in" flows
+            #
             no_longer_incident_parts = {old_target, old_source} - {
                 new_target,
                 new_source,
@@ -183,7 +184,7 @@ def compute_edge_flows(partition) -> Dict:
             newly_incident_parts = {new_target, new_source} - {old_target, old_source}
             for part in newly_incident_parts:
                 edge_flows[part]["in"].add(edge)
-    
+
     return edge_flows
 
 

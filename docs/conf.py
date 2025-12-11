@@ -81,7 +81,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = 'en'
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -120,7 +120,7 @@ html_static_path = ["_static"]
 #
 # html_sidebars = {}
 html_css_files = [
-    'css/custom.css',
+    "css/custom.css",
 ]
 
 
@@ -192,33 +192,6 @@ autoclass_content = "both"
 
 autodoc_default_flags = ["members"]
 
-# -- Mock C libraries --------------------------------------------------------
-
-# RTD is unable to install libraries with C dependencies.
-# We're using the mock module to mock those away.
-
-MOCK_MODULES = [
-    "numpy",
-    "pandas",
-    "geopandas",
-    "matplotlib",
-    "matplotlib.pyplot",
-    # "networkx",
-    # "networkx.readwrite",
-    # "networkx.algorithms",
-    # "networkx.algorithms.shortest_paths",
-    # "networkx.algorithms.shortest_paths.weighted",
-    "shapely",
-    "shapely.ops",
-    "shapely.strtree",
-    "shapely.prep",
-    "shapely.prepared",
-    "shapely.validation",
-    "gerrychain.vendor.utm",
-]
-
-for module in MOCK_MODULES:
-    sys.modules[module] = mock.Mock()
 
 # -- Extension configuration -------------------------------------------------
 

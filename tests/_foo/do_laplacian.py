@@ -1,14 +1,14 @@
-
 import networkx as nx
-import rustworkx as rx
 import numpy as np
+import rustworkx as rx
 from graph import Graph
-import tree as gc_tree
 
 # Create an RX graph (replace with your graph data)
 rx_graph = rx.PyGraph()
 rx_graph.add_nodes_from([0, 1, 2, 3])
-rx_graph.add_edges_from([(0, 1, "data"), (0, 2, "data"), (1, 2, "data"), (2, 3, "data")])
+rx_graph.add_edges_from(
+    [(0, 1, "data"), (0, 2, "data"), (1, 2, "data"), (2, 3, "data")]
+)
 
 # 1. Get the adjacency matrix
 adj_matrix = rx.adjacency_matrix(rx_graph)

@@ -1,19 +1,20 @@
 # Imports
-from collections import defaultdict, Counter
-# frm TODO: Refactoring: Remove dependence on NetworkX.  
+import math
+from collections import Counter, defaultdict
+from typing import List
+
+# frm TODO: Refactoring: Remove dependence on NetworkX.
 #           The only use is:
 #                pieces += nx.number_connected_components(subgraph)
-import networkx as nx
-import math
-from typing import List
 
 # frm: TODO: Performance: Do performance testing and improve performance of these routines.
 #
 # Peter made the comment in a PR that we should make this code more efficient:
 #
-# A note on this file: A ton of the code in here is inefficient. This was 
-# made 6 years ago and hasn't really been touched since then other than 
+# A note on this file: A ton of the code in here is inefficient. This was
+# made 6 years ago and hasn't really been touched since then other than
 # when I was doing an overhaul on many of the doc strings
+
 
 class LocalitySplits:
     """
@@ -145,14 +146,15 @@ class LocalitySplits:
     def __call__(self, partition):
 
         # frm: TODO: Refactoring:   LocalitySplits: Figure out how this is intended to be used...
-        # 
-        # Not quite sure why it is better to have a "__call()__" method instead of a 
+        #
+        # Not quite sure why it is better to have a "__call()__" method instead of a
         # get_scores(self) method, but whatever...
         #
         # This routine indeed just computes the requested scores (specified in the constructor).
-        # It stashed those scores as a data member in the class and returns them to the caller as well.
+        # It stashed those scores as a data member in the class and returns them to the caller as
+        # well.
         #
-        # This all seems kind of misguided to me - and there is no instance of this being used in 
+        # This all seems kind of misguided to me - and there is no instance of this being used in
         # the gerrychain code except in a test, so I am not sure how it is intended to be used.
         #
         # Probably need to look at some user code that Peter sent me to see if anyone actually uses
@@ -162,7 +164,9 @@ class LocalitySplits:
         if self.localities == []:
             self.localitydict = {}
             for node_id in partition.graph.node_indices:
-                self.localitydict[node_id] = partition.graph.node_data(node_id)[self.col_id]
+                self.localitydict[node_id] = partition.graph.node_data(node_id)[
+                    self.col_id
+                ]
 
             self.localities = set(list(self.localitydict.values()))
 
@@ -183,29 +187,33 @@ class LocalitySplits:
 
             totpop = 0
             for node_id in partition.graph.node_indices:
-                # frm: TODO: Refactoring:  Once you have a partition, you cannot change the total population
-                #               in the Partition, so why don't we cache the total population as
-                #               a data member in Partition?
+                # frm: TODO: Refactoring:  Once you have a partition, you cannot change the
+                #      total population in the Partition, so why don't we cache the total
+                #      population as a data member in Partition?
                 #
                 # Peter agreed that this would be a good thing to do
 
                 totpop += partition.graph.node_data(node_id)[self.pop_col]
 
-            # frm: TODO: Refactoring:  Ditto with num_districts - isn't this a constant once you create a Partition?
+            # frm: TODO: Refactoring:  Ditto with num_districts - isn't this a constant once you
+            #      create a Partition?
             #
             # Peter agreed that this would be a good thing to do.
 
             num_districts = len(partition.assignment.parts.keys())
 
-            # Compute the total population for each locality and then the number of "allowed pieces"
-            for loc in self.localities:
-                # frm: TODO: Refactoring:    The code below just calculates the total population for a set of nodes.
-                #               This sounds like a good candidate for a utility function.  See if this
-                #               logic is repeated elsewhere...
+            # Compute the total population for each locality and then the number of
+            # "allowed pieces"
+            for _ in self.localities:
+                # frm: TODO: Refactoring:    The code below just calculates the total population
+                #      for a set of nodes. This sounds like a good candidate for a utility
+                #      function.  See if this logic is repeated elsewhere...
 
                 # Compute the population associated with each location
                 the_graph = partition.graph
-                locality_population = {}  # dict mapping locality name to population in that locality
+                locality_population = (
+                    {}
+                )  # dict mapping locality name to population in that locality
                 for node_id in the_graph.node_indices:
                     locality_name = the_graph.node_data(node_id)[self.col_id]
                     locality_pop = the_graph.node_data(node_id)[self.pop_col]
@@ -222,7 +230,9 @@ class LocalitySplits:
                 allowed_pieces = {}
                 for locality_name in locality_population.keys():
                     pop_for_locality = locality_population[locality_name]
-                    allowed_pieces[locality_name] = math.ceil(pop_for_locality / ideal_population_per_district)
+                    allowed_pieces[locality_name] = math.ceil(
+                        pop_for_locality / ideal_population_per_district
+                    )
 
             self.allowed_pieces = allowed_pieces
 
@@ -338,7 +348,7 @@ class LocalitySplits:
         """
 
         total_vtds = 0
-        for k, v in self.locality_splits.items():
+        for v in self.locality_splits.values():
             for x in list(v.values()):
                 total_vtds += x
 
@@ -346,7 +356,7 @@ class LocalitySplits:
         for locality_j in self.localities:  # iter thru locs to get total count
             tot_county_vtds = 0
             # iter thru counters
-            for k, v in self.locality_splits.items():
+            for v in self.locality_splits.values():
                 v = dict(v)
                 if locality_j in list(v.keys()):
                     tot_county_vtds += v[locality_j]
@@ -356,7 +366,7 @@ class LocalitySplits:
 
             # iter thru districts to get vtds in county in district
             # for district in range(num_districts):
-            for k, v in self.locality_splits.items():
+            for v in self.locality_splits.values():
                 # counter = dict(locality_splits[district+1])
                 count = dict(v)
                 if locality_j in count:
@@ -381,7 +391,7 @@ class LocalitySplits:
         """
 
         total_vtds = 0  # count the total number of vtds in state
-        for k, v in self.locality_splits.items():
+        for v in self.locality_splits.values():
             for x in list(v.values()):
                 total_vtds += x
 
@@ -389,7 +399,7 @@ class LocalitySplits:
         for locality_j in self.localities:  # iter thru locs to get total count
             tot_county_vtds = 0
             # iter thru counters
-            for k, v in self.locality_splits.items():
+            for v in self.locality_splits.values():
                 v = dict(v)
                 if locality_j in list(v.keys()):
                     tot_county_vtds += v[locality_j]
@@ -399,7 +409,7 @@ class LocalitySplits:
             q = tot_county_vtds / total_vtds
             # iter thru districts to get vtds in county in district
             # for district in range(num_districts):
-            for k, v in self.locality_splits.items():
+            for v in self.locality_splits.values():
                 # counter = dict(locality_splits[district+1])
                 count = dict(v)
                 if locality_j in count:

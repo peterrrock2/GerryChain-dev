@@ -1,9 +1,10 @@
+import random
+
+import networkx as nx
 import pytest
 
 from gerrychain import Graph, Partition
-import random
 from gerrychain.updaters import cut_edges
-import networkx as nx
 
 random.seed(2018)
 
@@ -33,6 +34,7 @@ def three_by_three_grid():
         ]
     )
     return Graph.from_networkx(nx_graph)
+
 
 @pytest.fixture
 def four_by_five_grid_for_opt():

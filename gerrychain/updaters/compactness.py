@@ -1,8 +1,8 @@
 import collections
-
-from .flows import on_flow
-from .cut_edges import on_edge_flow
 from typing import Dict, Set
+
+from .cut_edges import on_edge_flow
+from .flows import on_flow
 
 
 def boundary_nodes(partition, alias: str = "boundary_nodes") -> Set:
@@ -17,17 +17,17 @@ def boundary_nodes(partition, alias: str = "boundary_nodes") -> Set:
     :rtype: Set
     """
 
-    # Note that the "alias" parameter is used as the attribute name 
-    # on the partition - using this "alias" you can retrieve the 
+    # Note that the "alias" parameter is used as the attribute name
+    # on the partition - using this "alias" you can retrieve the
     # the data stored by an updater that uses this routine...
 
     if partition.parent:
         return partition.parent[alias]
     else:
         result = {
-          node_id
-          for node_id in partition.graph.node_indices
-          if partition.graph.node_data(node_id)["boundary_node"]
+            node_id
+            for node_id in partition.graph.node_indices
+            if partition.graph.node_data(node_id)["boundary_node"]
         }
         return result
 
@@ -71,11 +71,11 @@ def exterior_boundaries_as_a_set(
         partition.
     :rtype: Set
     """
-    # Compute the new set of boundary nodes for the partition.  
+    # Compute the new set of boundary nodes for the partition.
     #
     # The term, (inflow & graph_boundary), computes new nodes that are boundary nodes.
     #
-    # the term, (previous | (inflow & graph_boundary)), adds those new boundary nodes to the 
+    # the term, (previous | (inflow & graph_boundary)), adds those new boundary nodes to the
     # set of previous boundary nodes.
     #
     # Then all you need to do is subtract all of the nodes in the outflow to remove any of those
@@ -145,13 +145,13 @@ def initialize_interior_boundaries(partition):
     :rtype: Dict[int, float]
     """
 
-    # RustworkX Note: 
+    # RustworkX Note:
     #
-    # The old NX code did not distinguish between edges and edge_ids - they were one 
+    # The old NX code did not distinguish between edges and edge_ids - they were one
     # and the same.  However, in RX an edge is a tuple and an edge_id is an integer.
-    # The edges stored in partition["cut_edges_by_part"] are edges (tuples), so 
+    # The edges stored in partition["cut_edges_by_part"] are edges (tuples), so
     # we need to get the edge_id for each edge in order to access the data for the edge.
-    
+
     # Get edge_ids for each edge (tuple)
     edge_ids_for_part = {
         part: [
@@ -169,7 +169,7 @@ def initialize_interior_boundaries(partition):
         )
         for part in partition.parts
     }
-    
+
     return shared_perimeters_for_part
 
 
@@ -199,14 +199,16 @@ def interior_boundaries(
     """
 
     added_perimeter = sum(
-        partition.graph.edge_data(
-          partition.graph.get_edge_id_from_edge(edge)
-        )["shared_perim"] for edge in new_edges
+        partition.graph.edge_data(partition.graph.get_edge_id_from_edge(edge))[
+            "shared_perim"
+        ]
+        for edge in new_edges
     )
     removed_perimeter = sum(
-        partition.graph.edge_data(
-          partition.graph.get_edge_id_from_edge(edge)
-        )["shared_perim"] for edge in old_edges
+        partition.graph.edge_data(partition.graph.get_edge_id_from_edge(edge))[
+            "shared_perim"
+        ]
+        for edge in old_edges
     )
     return previous + added_perimeter - removed_perimeter
 

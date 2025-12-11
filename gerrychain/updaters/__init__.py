@@ -10,8 +10,8 @@ from .county_splits import CountySplit, county_splits, tally_region_splits
 from .cut_edges import cut_edges, cut_edges_by_part
 from .election import Election
 from .flows import compute_edge_flows, flows_from_changes
-from .tally import DataTally, Tally
 from .spanning_trees import num_spanning_trees
+from .tally import DataTally, Tally
 
 __all__ = [
     "flows_from_changes",

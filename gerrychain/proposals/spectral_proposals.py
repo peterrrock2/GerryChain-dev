@@ -1,9 +1,11 @@
-import networkx as nx       # frm: only used to get access to laplacian functions...
-from numpy import linalg as LA
 import random
+from typing import Dict, Optional
+
+from numpy import linalg as LA
+
 from ..graph import Graph
 from ..partition import Partition
-from typing import Dict, Optional
+
 
 # frm: only ever used in this file - but maybe it is used externally?
 def spectral_cut(
@@ -29,7 +31,7 @@ def spectral_cut(
     """
 
     # This routine operates on subgraphs, which is important because the node_ids
-    # in a subgraph are different from the node_ids of the parent graph, so 
+    # in a subgraph are different from the node_ids of the parent graph, so
     # the return value's node_ids need to be translated back into the appropriate
     # parent node_ids.
 
@@ -48,34 +50,35 @@ def spectral_cut(
         laplacian_matrix = (subgraph.laplacian_matrix()).todense()
 
     # frm TODO: Documentation: Add a better explanation for why eigenvectors are useful
-    #           for determining flips.  Perhaps just a URL to an article 
+    #           for determining flips.  Perhaps just a URL to an article
     #           somewhere...
     #
     # I have added comments to describe the nuts and bolts of what is happening,
     # but the overall rationale for this code is missing - and it should be here...
 
-
-    # LA.eigh(laplacian_matrix) call invokes the eigh() function from 
+    # LA.eigh(laplacian_matrix) call invokes the eigh() function from
     # the Numpy LinAlg module which:
     #
-    #     "returns the eigenvalues and eigenvectors of a complex Hermitian 
-    #      ... or a real symmetrix matrix."  
+    #     "returns the eigenvalues and eigenvectors of a complex Hermitian
+    #      ... or a real symmetrix matrix."
     #
-    # In our case we have a symmetric matrix, so it returns two 
+    # In our case we have a symmetric matrix, so it returns two
     # objects - a 1-D numpy array containing the eigenvalues (which we don't
     # care about) and a 2-D numpy square matrix of the eigenvectors.
-    numpy_eigen_values, numpy_eigen_vectors = LA.eigh(laplacian_matrix)
+    _, numpy_eigen_vectors = LA.eigh(laplacian_matrix)
 
     # Extract an eigenvector as a numpy array
     # frm: ???:  Not sure why we want just one of them...
-    numpy_eigen_vector = numpy_eigen_vectors[:, 1]    # frm: ??? I think that this is an eigenvector...
+    numpy_eigen_vector = numpy_eigen_vectors[
+        :, 1
+    ]  # frm: ??? I think that this is an eigenvector...
 
     # Convert to an array of normal Python numbers (not numpy based)
     eigen_vector_array = [numpy_eigen_vector.item(x) for x in range(num_nodes)]
 
     # node_color will be True or False depending on whether the value in the
-    # eigen_vector_array is positive or negative.  In the code below, this 
-    # is equivalent to node_color being 1 or 0 (since Python treats True as 1 
+    # eigen_vector_array is positive or negative.  In the code below, this
+    # is equivalent to node_color being 1 or 0 (since Python treats True as 1
     # and False as 0)
     node_color = [eigen_vector_array[x] > 0 for x in range(num_nodes)]
 
@@ -126,23 +129,22 @@ def spectral_recom(
     :rtype: Partition
     """
 
-    # Select two adjacent parts (districts) at random by first selecting 
-    # a cut_edge at random and then figuring out the parts (districts) 
+    # Select two adjacent parts (districts) at random by first selecting
+    # a cut_edge at random and then figuring out the parts (districts)
     # associated with the edge.
     cut_edge = random.choice(tuple(partition["cut_edges"]))
     parts_to_merge = (
-        partition.assignment.mapping[cut_edge[0]],  
+        partition.assignment.mapping[cut_edge[0]],
         partition.assignment.mapping[cut_edge[1]],
     )
 
-    subgraph_nodes = partition.parts[parts_to_merge[0]] | partition.parts[parts_to_merge[1]]
+    subgraph_nodes = (
+        partition.parts[parts_to_merge[0]] | partition.parts[parts_to_merge[1]]
+    )
 
     # Cut the set of all nodes from parts_to_merge into two hopefully new parts (districts)
     flips = spectral_cut(
-      partition.graph.subgraph(subgraph_nodes),
-      parts_to_merge, 
-      weight_type, 
-      lap_type
+        partition.graph.subgraph(subgraph_nodes), parts_to_merge, weight_type, lap_type
     )
 
     return partition.flip(flips)

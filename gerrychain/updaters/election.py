@@ -1,7 +1,8 @@
 import math
 from typing import Dict, List, Optional, Tuple, Union
-from gerrychain.updaters.tally import DataTally
+
 import gerrychain.metrics.partisan as pm
+from gerrychain.updaters.tally import DataTally
 
 
 class Election:
@@ -48,11 +49,11 @@ class Election:
     :type name: str
     :ivar parties: A list of the names of the parties in the election.
     :type parties: List[str]
-    :ivar node_attribute_names: A list of the node_attribute_names in the graph's node data that hold
-        the vote totals for each party.
+    :ivar node_attribute_names: A list of the node_attribute_names in the graph's node data that
+        hold the vote totals for each party.
     :type node_attribute_names: List[str]
-    :ivar party_names_to_node_attribute_names: A dictionary mapping party names to the node_attribute_names
-        in the graph's node data that hold the vote totals for that party.
+    :ivar party_names_to_node_attribute_names: A dictionary mapping party names to the
+        node_attribute_names in the graph's node data that hold the vote totals for that party.
     :type party_names_to_node_attribute_names: Dict[str, str]
     :ivar tallies: A dictionary mapping party names to :class:`DataTally` objects
         that manage the vote totals for that party.
@@ -74,19 +75,19 @@ class Election:
         """
         :param name: The name of the election. (e.g. "2008 Presidential")
         :type name: str
-        :param party_names_to_node_attribute_names: A mapping from the name of a 
-            party to the name of an attribute of a node that contains the 
-            vote totals for that party.  This parameter can be either a list or 
+        :param party_names_to_node_attribute_names: A mapping from the name of a
+            party to the name of an attribute of a node that contains the
+            vote totals for that party.  This parameter can be either a list or
             a dict.  If a list, then the name of the party and the name of the
-            node attribute are the same, for instance: ["Dem", "Rep"] would 
+            node attribute are the same, for instance: ["Dem", "Rep"] would
             indicate that the "Dem" party vote totals are stored in the "Dem"
             node attribute.  If a list, then there are two possibilities.
-        
+
         A dictionary matching party names to their
-            data node_attribute_names, either as actual node_attribute_names (list-like, indexed by nodes)
-            or as string keys for the node attributes that hold the party's
-            vote totals. Or, a list of strings which will serve as both
-            the party names and the node attribute keys.
+            data node_attribute_names, either as actual node_attribute_names (list-like, indexed
+            by nodes) or as string keys for the node attributes that hold the party's vote totals.
+            Or, a list of strings which will serve as both the party names and the node attribute
+            keys.
         :type party_names_to_node_attribute_names: Union[Dict, List]
         :param alias: Alias that the election is registered under
             in the Partition's dictionary of updaters.
@@ -102,50 +103,60 @@ class Election:
         # Canonicalize "parties", "node_attribute_names", and "party_names_to_node_attribute_names":
         #
         # "parties" are the names of the parties for purposes of reporting
-        # "node_attribute_names" are the names of the node attributes storing vote counts 
+        # "node_attribute_names" are the names of the node attributes storing vote counts
         # "party_names_to_node_attribute_names" is a mapping from one to the other
         #
         if isinstance(party_names_to_node_attribute_names, dict):
             self.parties = list(party_names_to_node_attribute_names.keys())
-            self.node_attribute_names = list(party_names_to_node_attribute_names.values())
-            self.party_names_to_node_attribute_names = party_names_to_node_attribute_names
+            self.node_attribute_names = list(
+                party_names_to_node_attribute_names.values()
+            )
+            self.party_names_to_node_attribute_names = (
+                party_names_to_node_attribute_names
+            )
         elif isinstance(party_names_to_node_attribute_names, list):
             # name of the party and the attribute name containing value is the same
             self.parties = party_names_to_node_attribute_names
             self.node_attribute_names = party_names_to_node_attribute_names
-            self.party_names_to_node_attribute_names = dict(zip(self.parties, self.node_attribute_names))
+            self.party_names_to_node_attribute_names = dict(
+                zip(self.parties, self.node_attribute_names)
+            )
         else:
-            raise TypeError("Election expects party_names_to_node_attribute_names to be a dict or list")
+            raise TypeError(
+                "Election expects party_names_to_node_attribute_names to be a dict or list"
+            )
 
         # frm: TODO: Documentation: Migration: Using node_ids to vote tally maps...
-        # 
+        #
         # A DataTally used to support a first parameter that was either a string
-        # or a dict.  
+        # or a dict.
         #
         # The idea was that in most cases, the values to be tallied would be present
         # as the values of attributes associated with nodes, so it made sense to just
         # provide the name of the attribute (a string) to identify what to tally.
-        # 
+        #
         # However, the code also supported providing an explicit mapping from node_id
         # to the value to be tallied (a dict).  This was useful for testing because
         # it allowed for tallying values without having to implement an updater that
         # would be based on a node's attribute.  It provided a way to map values that
-        # were not part of the graph to vote totals.  
-        # 
+        # were not part of the graph to vote totals.
+        #
         # The problem was that when we started using RX for the embedded graph for
-        # partitions, the node_ids were no longer the same as the ones the user 
-        # specified when creating the (NX) graph.  This complicated the logic of 
-        # having an explicit mapping from node_id to a value to be tallied - to 
+        # partitions, the node_ids were no longer the same as the ones the user
+        # specified when creating the (NX) graph.  This complicated the logic of
+        # having an explicit mapping from node_id to a value to be tallied - to
         # make this work the code would have needed to translate the node_ids into
         # the internal RX node_ids.
-        # 
+        #
         # The decision was made (Fred and Peter) that this extra complexity was not
-        # worth the trouble, so we now disallow passing in an explicit mapping (dict). 
-        # 
+        # worth the trouble, so we now disallow passing in an explicit mapping (dict).
+        #
 
         for party in self.parties:
             if isinstance(self.party_names_to_node_attribute_names[party], dict):
-                raise Exception("Election: Using a map from node_id to vote totals is no longer permitted")
+                raise Exception(
+                    "Election: Using a map from node_id to vote totals is no longer permitted"
+                )
 
         self.tallies = {
             party: DataTally(self.party_names_to_node_attribute_names[party], party)
@@ -165,8 +176,9 @@ class Election:
         }
 
     def __str__(self):
-        return "Election '{}' with vote totals for parties {} from node_attribute_names {}.".format(
-            self.name, str(self.parties), str(self.node_attribute_names)
+        return (
+            f"Election '{self.name}' with vote totals for parties {self.parties} "
+            f"from node_attribute_names {self.node_attribute_names}."
         )
 
     def __repr__(self):

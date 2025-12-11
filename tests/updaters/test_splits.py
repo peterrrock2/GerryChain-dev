@@ -1,9 +1,11 @@
 import pytest
 
 from gerrychain import Partition
-from gerrychain.updaters.county_splits import (CountySplit,
-                                               compute_county_splits,
-                                               county_splits)
+from gerrychain.updaters.county_splits import (
+    CountySplit,
+    compute_county_splits,
+    county_splits,
+)
 
 
 @pytest.fixture

@@ -24,9 +24,9 @@ Dependencies:
 Last Updated: 11 Jan 2024
 """
 
-from typing import Union, Iterable, Callable, Optional
+from typing import Callable, Iterable, Optional, Union
 
-from gerrychain.constraints import Validator, Bounds
+from gerrychain.constraints import Bounds, Validator
 from gerrychain.partition import Partition
 
 
