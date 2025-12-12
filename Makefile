@@ -5,7 +5,7 @@ VENV_DIR ?= .venv
 PKG ?= gerrychain
 TEST_PATHS ?= tests
 
-.PHONY: help setup install dev install-docs test lint format precommit docs clean
+.PHONY: help setup install install-docs test lint format precommit docs clean
 
 help:
 	@echo "Available targets:"
@@ -72,12 +72,11 @@ lint:
 
 precommit:
 	@echo "Running pre-commit hooks..."
-	uv run pre-commit install
 	uv run pre-commit run --all-files
 
 docs: install-docs
 	@echo "Building documentation..."
-	uv run sphinx-build -b html docs/ docs/_build
+	uv run sphinx-build -b dirhtml docs/ docs/_build
 
 clean:
 	@echo "Cleaning build artifacts..."
