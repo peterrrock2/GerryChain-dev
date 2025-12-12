@@ -54,7 +54,7 @@ install-docs: check_prereq
 
 test:
 	@echo "Running test suite..."
-	uv run pytest -v $(TEST_PATHS)
+	PYTHONHASHSEED=0 uv run pytest -v $(TEST_PATHS)
 
 # Add this in later
 # type-check:
