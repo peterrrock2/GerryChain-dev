@@ -12,7 +12,7 @@ version = "1.0.0a2"
 description = "GerryChain is a Python library for building ensembles of districting plans using Markov Chain Monte Carlo methods."
 readme = "README.rst"
 authors = [
-  { name = "MGGG Redistricting Lab", email = "code@mggg.org" },
+  { name = "Data and Democracy Lab", email = "code@mggg.org" },
 ]
 requires-python = ">=3.11"
 license = { text = "MIT" } 
