@@ -52,6 +52,10 @@ install-docs: check_prereq
 	uv sync --group docs
 	uv pip install -e .
 
+check:
+	$(MAKE) format
+	$(MAKE) lint
+
 test:
 	@echo "Running test suite..."
 	PYTHONHASHSEED=0 uv run pytest -v $(TEST_PATHS)

@@ -2,7 +2,7 @@ repos:
   - repo: local
     hooks:
       - id: make-format
-        name: Run `make format`
-        entry: make format
+        name: Run `make check` (format + lint)
+        entry: make check
         language: system
         pass_filenames: false

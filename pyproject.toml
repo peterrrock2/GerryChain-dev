@@ -65,17 +65,15 @@ dev = [
   "isort>=6.0.1",
   "autopep8>=2.3.2",
   "myst-parser>=4.0.1",
-
   # Iteractive kernel
   "ipykernel>=6.30.1",
   "ipywidgets>=8.1.7",
-
   # Testing
   "pytest>=8.4.2",
   "pytest-cov>=6.3.0",
-
-  # Other 
+  # Other
   "pre-commit>=4.3.0",
+  "ruff>=0.14.9",
 ]
 docs = [
   "myst-parser>=4.0.1",
